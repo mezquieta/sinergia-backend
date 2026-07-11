@@ -110,6 +110,7 @@
 
 <script>
 const CLAVE = 'sinergia_contenido';
+const API_BASE = location.hostname.endsWith('github.io') ? 'https://project-5y7mn.vercel.app' : '';
 const REDES = { instagram: { n: 'Instagram', c: 'var(--ig)', icono: '📸' }, tiktok: { n: 'TikTok', c: 'var(--tt)', icono: '🎵' }, youtube: { n: 'YouTube', c: 'var(--yt)', icono: '▶️' } };
 const HOY = new Date();
 let D = JSON.parse(localStorage.getItem(CLAVE) || 'null') || { posts: [], ideas: [], guiones: [], carruseles: [], metricas: [] };
@@ -446,7 +447,7 @@ async function generarGuion() {
   out.innerHTML = '<div class="cargando">✨ Escribiendo el guion…</div>';
   document.getElementById('g_btn').disabled = true;
   try {
-    const res = await fetch('/api/contenido', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    const res = await fetch(API_BASE + '/api/contenido', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'guion', tema }) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error del servidor');
@@ -524,7 +525,7 @@ async function generarCarrusel() {
   out.innerHTML = '<div class="cargando">✨ Diseñando las filminas…</div>';
   document.getElementById('c_btn').disabled = true;
   try {
-    const res = await fetch('/api/contenido', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    const res = await fetch(API_BASE + '/api/contenido', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'carrusel', tema, filminas: +document.getElementById('c_n').value }) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error del servidor');

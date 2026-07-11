@@ -116,7 +116,8 @@
 </main>
 
 <script>
-const API_URL = '/api/transcribe';
+const API_BASE = location.hostname.endsWith('github.io') ? 'https://project-5y7mn.vercel.app' : '';
+const API_URL = API_BASE + '/api/transcribe';
 
 function verTab(t) {
   document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));

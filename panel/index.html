@@ -115,6 +115,7 @@
 <script>
 /* ============ estado ============ */
 const CLAVE = 'sinergia_panel_datos';
+const API_BASE = location.hostname.endsWith('github.io') ? 'https://project-5y7mn.vercel.app' : '';
 const C = { s1:'#3987e5', s2:'#199e70', s3:'#c98500', s4:'#9085e9', s5:'#e66767', s6:'#d95926' };
 const SERIE = [C.s1, C.s2, C.s3, C.s4, C.s5, C.s6];
 let D = JSON.parse(localStorage.getItem(CLAVE) || 'null');
@@ -331,7 +332,7 @@ async function pedirInsights(seccion, kpis, contId) {
   const cont = document.getElementById(contId);
   cont.innerHTML = '<div class="vacio">✨ Analizando…</div>';
   try {
-    const res = await fetch('/api/panel', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    const res = await fetch(API_BASE + '/api/panel', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'insights', seccion, negocio: D.config.negocio, kpis }) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error del servidor');
