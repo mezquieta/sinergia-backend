@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proyecto X</title>
+<style>
+  :root {
+    --bg: #0f1117; --panel: #181b23; --panel2: #1f2330; --border: #2a2f3e;
+    --text: #e8eaf0; --muted: #8a90a3; --accent: #c2571b; --accent2: #e07b3a; --bad: #d95b4a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .tarjeta { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 100%; max-width: 560px; }
+  h1 { font-size: 22px; text-align: center; margin-bottom: 4px; }
+  h1 span { color: var(--accent2); }
+  .sub { color: var(--muted); font-size: 13px; text-align: center; margin-bottom: 22px; }
+  /* candado */
+  #candado input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); padding: 13px; font-size: 22px; text-align: center; letter-spacing: 10px; font-family: inherit; }
+  #candado button { width: 100%; margin-top: 12px; background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 13px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  #candado button:hover { background: var(--accent2); }
+  .error { color: var(--bad); font-size: 13px; text-align: center; margin-top: 10px; min-height: 18px; }
+  /* menú */
+  #menu { display: none; }
+  .apps { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 480px) { .apps { grid-template-columns: 1fr; } }
+  .app { background: var(--panel2); border: 1px solid var(--border); border-radius: 12px; padding: 18px 16px; text-decoration: none; color: var(--text); display: block; }
+  .app:hover { border-color: var(--accent2); }
+  .app .icono { font-size: 26px; margin-bottom: 8px; }
+  .app b { display: block; font-size: 15px; margin-bottom: 4px; }
+  .app small { color: var(--muted); font-size: 12px; line-height: 1.45; display: block; }
+  .salir { margin-top: 16px; text-align: center; }
+  .salir button { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 8px 14px; font-size: 12px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="tarjeta">
+  <h1>Proyecto <span>X</span></h1>
+
+  <div id="candado">
+    <div class="sub">Zona privada — escribe el PIN para entrar</div>
+    <input id="pin" type="password" inputmode="numeric" maxlength="8" autocomplete="off" onkeydown="if(event.key==='Enter')entrar()">
+    <button onclick="entrar()">Entrar</button>
+    <div class="error" id="err"></div>
+  </div>
+
+  <div id="menu">
+    <div class="sub">Tus herramientas de negocio</div>
+    <div class="apps">
+      <a class="app" href="/crm/"><div class="icono">🤝</div><b>CRM</b><small>Leads, pipeline y agente de ventas con IA.</small></a>
+      <a class="app" href="/voz/"><div class="icono">🎙</div><b>Voz</b><small>Transcribir reuniones, minutas y dictado.</small></a>
+      <a class="app" href="/panel/"><div class="icono">📊</div><b>Panel</b><small>Dashboards: ejecutivo, ventas, finanzas y más.</small></a>
+      <a class="app" href="/contenido/"><div class="icono">📱</div><b>Contenido</b><small>Calendario de posts, métricas, guiones y carruseles IA.</small></a>
+      <a class="app" href="/radar/"><div class="icono">🛰</div><b>Radar</b><small>Ideas nuevas de diseño web, prompts y habilidades IA.</small></a>
+    </div>
+    <div class="salir"><button onclick="salir()">🔒 Cerrar sesión</button></div>
+  </div>
+</div>
+
+<script>
+// PIN de acceso: se guarda solo el hash SHA-256, no el PIN.
+// Para cambiarlo: genera el hash del nuevo PIN y reemplaza esta constante.
+const HASH_PIN = '9607bf9d54d419afa0183127cbd4ed038be4edc286c147b609a772a157b76fc6';
+const LLAVE = 'sinergia_oficina_ok';
+
+async function sha256(txt) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function entrar() {
+  const pin = document.getElementById('pin').value.trim();
+  if (!pin) return;
+  if (await sha256(pin) === HASH_PIN) {
+    sessionStorage.setItem(LLAVE, '1');
+    mostrarMenu();
+  } else {
+    document.getElementById('err').textContent = 'PIN incorrecto';
+    document.getElementById('pin').value = '';
+  }
+}
+
+function mostrarMenu() {
+  document.getElementById('candado').style.display = 'none';
+  document.getElementById('menu').style.display = 'block';
+}
+
+function salir() {
+  sessionStorage.removeItem(LLAVE);
+  location.reload();
+}
+
+if (sessionStorage.getItem(LLAVE) === '1') mostrarMenu();
+else setTimeout(() => document.getElementById('pin').focus(), 100);
+</script>
+</body>
+</html>

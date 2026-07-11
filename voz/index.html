@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sinergia Voz</title>
+<script>if (sessionStorage.getItem('sinergia_oficina_ok') !== '1') location.replace('/oficina/');</script>
+<style>
+  :root {
+    --bg: #0f1117; --panel: #181b23; --panel2: #1f2330; --border: #2a2f3e;
+    --text: #e8eaf0; --muted: #8a90a3; --accent: #c2571b; --accent2: #e07b3a;
+    --ok: #3ba55d; --bad: #d95b4a; --rec: #e04a3a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
+  header h1 { font-size: 20px; }
+  header h1 span { color: var(--accent2); }
+  .tabs { display: flex; gap: 8px; }
+  .tab { background: var(--panel2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 9px 16px; font-size: 14px; cursor: pointer; font-weight: 600; }
+  .tab.activo { background: var(--accent); border-color: var(--accent); }
+  main { max-width: 860px; margin: 0 auto; padding: 20px 16px 60px; }
+  .seccion { display: none; }
+  .seccion.activa { display: block; }
+  .btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 14px; cursor: pointer; font-weight: 600; }
+  .btn:hover { background: var(--accent2); }
+  .btn.sec { background: var(--panel2); border: 1px solid var(--border); }
+  .btn.rojo { background: var(--rec); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .caja { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .caja h2 { font-size: 15px; margin-bottom: 10px; }
+  .hint { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+  .controles { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  select, input[type=text] { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 9px 11px; font-size: 14px; }
+  .texto { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; min-height: 140px; font-size: 15px; line-height: 1.6; white-space: pre-wrap; }
+  .texto .interim { color: var(--muted); }
+  .estado { font-size: 13px; color: var(--muted); margin: 8px 0; }
+  .estado.grabando { color: var(--rec); font-weight: 600; }
+  .minuta { display: none; }
+  .minuta h3 { font-size: 14px; color: var(--accent2); margin: 12px 0 6px; }
+  .minuta ul { padding-left: 20px; font-size: 14px; line-height: 1.7; }
+  .hist-item { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 8px; cursor: pointer; }
+  .hist-item:hover { border-color: var(--accent); }
+  .hist-item .t { font-weight: 600; margin-bottom: 2px; }
+  .hist-item .f { font-size: 12px; color: var(--muted); }
+  .error-msg { color: var(--bad); font-size: 13px; margin-top: 8px; display: none; }
+  .punto { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--rec); animation: parp 1s infinite; margin-right: 6px; vertical-align: middle; }
+  @keyframes parp { 50% { opacity: 0.2; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sinergia <span>Voz</span></h1>
+  <div class="tabs">
+    <button class="tab activo" onclick="verTab('dictado')" id="tab-dictado">🎙 Dictado</button>
+    <button class="tab" onclick="verTab('reunion')" id="tab-reunion">👥 Reuniones</button>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ DICTADO ============ -->
+<section class="seccion activa" id="sec-dictado">
+  <div class="caja">
+    <h2>Dictado por voz en tiempo real</h2>
+    <div class="hint">Habla y el texto aparece al instante. Funciona gratis y sin enviar nada a un servidor (usa el reconocimiento del navegador — Chrome recomendado).</div>
+    <div class="controles">
+      <select id="idiomaDictado">
+        <option value="es-MX">Español</option>
+        <option value="en-US">English</option>
+      </select>
+      <button class="btn" id="btnDictar" onclick="toggleDictado()">🎙 Empezar a dictar</button>
+      <button class="btn sec" onclick="copiar('textoDictado')">📋 Copiar</button>
+      <button class="btn sec" onclick="descargar(document.getElementById('textoDictado').innerText, 'dictado.txt')">⬇ Descargar</button>
+      <button class="btn sec" onclick="limpiarDictado()">🗑 Limpiar</button>
+    </div>
+    <div class="estado" id="estadoDictado">Listo.</div>
+    <div class="texto" id="textoDictado"></div>
+    <div class="error-msg" id="errDictado"></div>
+  </div>
+</section>
+
+<!-- ============ REUNIONES ============ -->
+<section class="seccion" id="sec-reunion">
+  <div class="caja">
+    <h2>Transcribir una reunión</h2>
+    <div class="hint">Graba tu micrófono (reunión presencial) o el audio de una pestaña + tu micrófono (reunión virtual: al compartir, elige la <b>pestaña</b> de la videollamada y activa "compartir audio"). La grabación se transcribe por segmentos automáticamente.</div>
+    <div class="controles">
+      <input type="text" id="tituloReunion" placeholder="Título de la reunión" style="flex:1; min-width:180px;">
+      <button class="btn" id="btnMic" onclick="iniciarGrabacion('mic')">🎤 Grabar micrófono</button>
+      <button class="btn" id="btnTab" onclick="iniciarGrabacion('tab')">🖥 Grabar reunión virtual</button>
+      <button class="btn rojo" id="btnStop" onclick="detenerGrabacion()" disabled>⏹ Detener</button>
+    </div>
+    <div class="controles">
+      <label class="hint" style="margin:0;">O sube un audio (máx. ~3 MB): </label>
+      <input type="file" id="archivoAudio" accept="audio/*" onchange="transcribirArchivo(this.files[0])">
+    </div>
+    <div class="estado" id="estadoReunion">Listo.</div>
+    <div class="texto" id="textoReunion"></div>
+    <div class="error-msg" id="errReunion"></div>
+    <div class="controles" style="margin-top:12px;">
+      <button class="btn" id="btnMinuta" onclick="generarMinuta()" disabled>📝 Generar minuta</button>
+      <button class="btn sec" onclick="copiar('textoReunion')">📋 Copiar transcripción</button>
+      <button class="btn sec" onclick="guardarReunion()">💾 Guardar reunión</button>
+    </div>
+    <div class="minuta" id="minuta"></div>
+  </div>
+
+  <div class="caja">
+    <h2>Reuniones guardadas</h2>
+    <div id="historial"><div class="hint">Aún no hay reuniones guardadas.</div></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+const API_URL = '/api/transcribe';
+
+function verTab(t) {
+  document.querySelectorAll('.seccion').forEach(s => s.classList.remove('activa'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('activo'));
+  document.getElementById('sec-' + t).classList.add('activa');
+  document.getElementById('tab-' + t).classList.add('activo');
+}
+
+function copiar(id) {
+  navigator.clipboard.writeText(document.getElementById(id).innerText);
+}
+
+function descargar(texto, nombre) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([texto], { type: 'text/plain' }));
+  a.download = nombre;
+  a.click();
+}
+
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ================= DICTADO ================= */
+let rec = null, dictando = false, textoFinal = '';
+
+function toggleDictado() {
+  dictando ? pararDictado() : empezarDictado();
+}
+
+function empezarDictado() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const err = document.getElementById('errDictado');
+  err.style.display = 'none';
+  if (!SR) {
+    err.textContent = '⚠ Tu navegador no soporta dictado en tiempo real. Usa Chrome, o graba con la pestaña Reuniones.';
+    err.style.display = 'block';
+    return;
+  }
+  rec = new SR();
+  rec.lang = document.getElementById('idiomaDictado').value;
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) textoFinal += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    document.getElementById('textoDictado').innerHTML = esc(textoFinal) + '<span class="interim">' + esc(interim) + '</span>';
+  };
+  rec.onend = () => { if (dictando) rec.start(); }; // Chrome corta tras silencios: reanudar
+  rec.onerror = (e) => {
+    if (e.error === 'not-allowed') {
+      err.textContent = '⚠ Permiso de micrófono denegado.';
+      err.style.display = 'block';
+      pararDictado();
+    }
+  };
+  rec.start();
+  dictando = true;
+  document.getElementById('btnDictar').textContent = '⏹ Detener dictado';
+  document.getElementById('estadoDictado').innerHTML = '<span class="punto"></span>Escuchando...';
+  document.getElementById('estadoDictado').classList.add('grabando');
+}
+
+function pararDictado() {
+  dictando = false;
+  if (rec) rec.stop();
+  document.getElementById('btnDictar').textContent = '🎙 Empezar a dictar';
+  document.getElementById('estadoDictado').textContent = 'Detenido.';
+  document.getElementById('estadoDictado').classList.remove('grabando');
+}
+
+function limpiarDictado() {
+  textoFinal = '';
+  document.getElementById('textoDictado').innerHTML = '';
+}
+
+/* ================= REUNIONES ================= */
+// Se graba en segmentos de 8 min a 32 kbps (~2 MB) para caber en el límite de
+// 4.5 MB por request de Vercel; cada segmento se transcribe apenas termina.
+const SEGMENTO_MS = 8 * 60 * 1000;
+let recorder = null, streams = [], grabando = false, segTimer = null;
+let partes = [], segIndex = 0, pendientes = 0, cronoTimer = null, inicioGrab = 0;
+
+async function iniciarGrabacion(fuente) {
+  const err = document.getElementById('errReunion');
+  err.style.display = 'none';
+  try {
+    let stream;
+    if (fuente === 'mic') {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streams = [stream];
+    } else {
+      const disp = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      if (!disp.getAudioTracks().length) {
+        disp.getTracks().forEach(t => t.stop());
+        throw new Error('No se compartió audio. Al compartir, elige una PESTAÑA y activa "compartir audio de la pestaña".');
+      }
+      const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const ctx = new AudioContext();
+      const dest = ctx.createMediaStreamDestination();
+      ctx.createMediaStreamSource(new MediaStream(disp.getAudioTracks())).connect(dest);
+      ctx.createMediaStreamSource(mic).connect(dest);
+      stream = dest.stream;
+      streams = [disp, mic, stream];
+      disp.getVideoTracks()[0].onended = () => { if (grabando) detenerGrabacion(); };
+    }
+    partes = []; segIndex = 0; pendientes = 0;
+    document.getElementById('textoReunion').innerHTML = '';
+    document.getElementById('minuta').style.display = 'none';
+    grabando = true;
+    inicioGrab = Date.now();
+    empezarSegmento(stream);
+    cronoTimer = setInterval(actualizarEstado, 1000);
+    document.getElementById('btnMic').disabled = true;
+    document.getElementById('btnTab').disabled = true;
+    document.getElementById('btnStop').disabled = false;
+    document.getElementById('btnMinuta').disabled = true;
+  } catch (e) {
+    err.textContent = '⚠ ' + (e.message || 'No se pudo iniciar la grabación');
+    err.style.display = 'block';
+  }
+}
+
+function empezarSegmento(stream) {
+  const chunks = [];
+  const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '';
+  recorder = new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 32000 } : undefined);
+  recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: 'audio/webm' });
+    if (blob.size > 1000) transcribirSegmento(blob, segIndex++);
+    if (grabando) empezarSegmento(stream);
+  };
+  recorder.start();
+  clearTimeout(segTimer);
+  segTimer = setTimeout(() => { if (recorder.state === 'recording') recorder.stop(); }, SEGMENTO_MS);
+}
+
+function detenerGrabacion() {
+  grabando = false;
+  clearTimeout(segTimer);
+  clearInterval(cronoTimer);
+  if (recorder && recorder.state === 'recording') recorder.stop();
+  streams.forEach(s => s.getTracks().forEach(t => t.stop()));
+  document.getElementById('btnMic').disabled = false;
+  document.getElementById('btnTab').disabled = false;
+  document.getElementById('btnStop').disabled = true;
+  actualizarEstado();
+}
+
+function actualizarEstado() {
+  const el = document.getElementById('estadoReunion');
+  if (grabando) {
+    const seg = Math.floor((Date.now() - inicioGrab) / 1000);
+    const mm = String(Math.floor(seg / 60)).padStart(2, '0');
+    const ss = String(seg % 60).padStart(2, '0');
+    el.innerHTML = `<span class="punto"></span>Grabando ${mm}:${ss}` + (pendientes ? ` · transcribiendo ${pendientes} segmento(s)...` : '');
+    el.classList.add('grabando');
+  } else {
+    el.classList.remove('grabando');
+    el.textContent = pendientes ? `Transcribiendo ${pendientes} segmento(s)...` : 'Transcripción lista.';
+    document.getElementById('btnMinuta').disabled = pendientes > 0 || !partes.some(p => p);
+  }
+}
+
+function blobABase64(blob) {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result.split(',')[1]);
+    fr.onerror = reject;
+    fr.readAsDataURL(blob);
+  });
+}
+
+async function transcribirSegmento(blob, indice) {
+  pendientes++;
+  actualizarEstado();
+  const err = document.getElementById('errReunion');
+  try {
+    const audio = await blobABase64(blob);
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'transcribe', audio, mimeType: blob.type || 'audio/webm' }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error del servidor');
+    partes[indice] = data.transcript === '[sin voz]' ? '' : data.transcript;
+    renderTranscript();
+  } catch (e) {
+    partes[indice] = `[error transcribiendo el segmento ${indice + 1}: ${e.message}]`;
+    renderTranscript();
+    err.textContent = '⚠ ' + e.message;
+    err.style.display = 'block';
+  } finally {
+    pendientes--;
+    actualizarEstado();
+  }
+}
+
+function renderTranscript() {
+  document.getElementById('textoReunion').textContent = partes.filter(p => p).join('\n\n');
+}
+
+async function transcribirArchivo(file) {
+  if (!file) return;
+  const err = document.getElementById('errReunion');
+  err.style.display = 'none';
+  if (file.size > 3 * 1024 * 1024) {
+    err.textContent = '⚠ El archivo supera 3 MB. Para audios largos usa la grabación por segmentos.';
+    err.style.display = 'block';
+    return;
+  }
+  partes = []; segIndex = 1;
+  document.getElementById('textoReunion').innerHTML = '';
+  await transcribirSegmento(file, 0);
+}
+
+async function generarMinuta() {
+  const transcript = partes.filter(p => p).join('\n\n');
+  if (!transcript) return;
+  const err = document.getElementById('errReunion');
+  err.style.display = 'none';
+  const btn = document.getElementById('btnMinuta');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generando...';
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'minutes', transcript, titulo: document.getElementById('tituloReunion').value }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error del servidor');
+    ultimaMinuta = data;
+    renderMinuta(data);
+  } catch (e) {
+    err.textContent = '⚠ ' + e.message;
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📝 Generar minuta';
+  }
+}
+
+let ultimaMinuta = null;
+
+function renderMinuta(m) {
+  const el = document.getElementById('minuta');
+  el.style.display = 'block';
+  el.innerHTML = `
+    <h3>Resumen</h3><ul><li>${esc(m.resumen)}</li></ul>
+    <h3>Puntos clave</h3><ul>${(m.puntos_clave || []).map(p => `<li>${esc(p)}</li>`).join('') || '<li>—</li>'}</ul>
+    <h3>Acuerdos</h3><ul>${(m.acuerdos || []).map(p => `<li>${esc(p)}</li>`).join('') || '<li>—</li>'}</ul>
+    <h3>Pendientes</h3><ul>${(m.pendientes || []).map(p => `<li><b>${esc(p.tarea)}</b> — ${esc(p.responsable)}</li>`).join('') || '<li>—</li>'}</ul>`;
+}
+
+/* ================= HISTORIAL ================= */
+let reuniones = JSON.parse(localStorage.getItem('sinergia_reuniones') || '[]');
+
+function guardarReunion() {
+  const transcript = partes.filter(p => p).join('\n\n');
+  if (!transcript) return;
+  reuniones.unshift({
+    id: crypto.randomUUID(),
+    titulo: document.getElementById('tituloReunion').value || 'Reunión sin título',
+    fecha: new Date().toLocaleString('es-MX'),
+    transcript,
+    minuta: ultimaMinuta,
+  });
+  localStorage.setItem('sinergia_reuniones', JSON.stringify(reuniones));
+  renderHistorial();
+}
+
+function abrirReunion(id) {
+  const r = reuniones.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('tituloReunion').value = r.titulo;
+  partes = [r.transcript]; segIndex = 1;
+  ultimaMinuta = r.minuta || null;
+  renderTranscript();
+  if (r.minuta) renderMinuta(r.minuta); else document.getElementById('minuta').style.display = 'none';
+  document.getElementById('btnMinuta').disabled = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function borrarReunion(ev, id) {
+  ev.stopPropagation();
+  if (!confirm('¿Eliminar esta reunión?')) return;
+  reuniones = reuniones.filter(x => x.id !== id);
+  localStorage.setItem('sinergia_reuniones', JSON.stringify(reuniones));
+  renderHistorial();
+}
+
+function renderHistorial() {
+  const el = document.getElementById('historial');
+  el.innerHTML = reuniones.length ? reuniones.map(r => `
+    <div class="hist-item" onclick="abrirReunion('${r.id}')">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div><div class="t">${esc(r.titulo)}</div><div class="f">${esc(r.fecha)}${r.minuta ? ' · con minuta' : ''}</div></div>
+        <button class="btn sec" onclick="borrarReunion(event,'${r.id}')">🗑</button>
+      </div>
+    </div>`).join('') : '<div class="hint">Aún no hay reuniones guardadas.</div>';
+}
+
+renderHistorial();
+</script>
+</body>
+</html>

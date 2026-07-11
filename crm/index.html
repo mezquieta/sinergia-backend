@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sinergia CRM</title>
+<script>if (sessionStorage.getItem('sinergia_oficina_ok') !== '1') location.replace('/oficina/');</script>
+<style>
+  :root {
+    --bg: #0f1117; --panel: #181b23; --panel2: #1f2330; --border: #2a2f3e;
+    --text: #e8eaf0; --muted: #8a90a3; --accent: #c2571b; --accent2: #e07b3a;
+    --ok: #3ba55d; --warn: #d9a03f; --bad: #d95b4a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--border); }
+  header h1 { font-size: 20px; }
+  header h1 span { color: var(--accent2); }
+  .btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 14px; cursor: pointer; font-weight: 600; }
+  .btn:hover { background: var(--accent2); }
+  .btn.sec { background: var(--panel2); border: 1px solid var(--border); }
+  .btn.danger { background: transparent; border: 1px solid var(--bad); color: var(--bad); }
+  #hoy { margin: 16px 24px 0; padding: 12px 16px; background: var(--panel2); border: 1px solid var(--warn); border-radius: 10px; font-size: 14px; display: none; }
+  .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 20px 24px; align-items: start; }
+  @media (max-width: 900px) { .board { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .board { grid-template-columns: 1fr; } }
+  .col { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .col h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 10px; display: flex; justify-content: space-between; }
+  .card { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 10px; cursor: pointer; }
+  .card:hover { border-color: var(--accent); }
+  .card .nombre { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .card .interes { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .card .meta { display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+  .pill { padding: 2px 8px; border-radius: 999px; background: var(--panel); border: 1px solid var(--border); }
+  .pill.score-alto { border-color: var(--ok); color: var(--ok); }
+  .pill.score-medio { border-color: var(--warn); color: var(--warn); }
+  .pill.score-bajo { border-color: var(--bad); color: var(--bad); }
+  .vacio { color: var(--muted); font-size: 13px; text-align: center; padding: 12px 0; }
+  /* Modal */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: none; align-items: flex-start; justify-content: center; padding: 4vh 16px; overflow-y: auto; z-index: 10; }
+  .overlay.abierto { display: flex; }
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 640px; padding: 22px; }
+  .modal h3 { margin-bottom: 16px; font-size: 18px; }
+  .campo { margin-bottom: 12px; }
+  .campo label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  .campo input, .campo textarea, .campo select {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); padding: 9px 11px; font-size: 14px; font-family: inherit;
+  }
+  .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .acciones { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+  /* Chat */
+  .calif { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin: 14px 0; font-size: 13px; display: none; }
+  .calif div { margin-bottom: 4px; }
+  .chat { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; max-height: 260px; overflow-y: auto; margin-bottom: 10px; }
+  .msg { max-width: 85%; padding: 8px 12px; border-radius: 10px; margin-bottom: 8px; font-size: 14px; white-space: pre-wrap; }
+  .msg.lead { background: var(--panel2); }
+  .msg.agente { background: #2b3a2e; margin-left: auto; }
+  .msg .quien { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+  .chatinput { display: flex; gap: 8px; }
+  .chatinput input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 10px; font-size: 14px; }
+  .cargando { color: var(--muted); font-size: 13px; padding: 6px 0; display: none; }
+  .error-msg { color: var(--bad); font-size: 13px; padding: 6px 0; display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sinergia <span>CRM</span></h1>
+  <div style="display:flex; gap:10px;">
+    <button class="btn sec" onclick="configurarNegocio()">⚙ Mi negocio</button>
+    <button class="btn" onclick="abrirNuevo()">+ Nuevo lead</button>
+  </div>
+</header>
+
+<div id="hoy"></div>
+
+<div class="board" id="board"></div>
+
+<!-- Modal nuevo/detalle lead -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="modalTitulo">Nuevo lead</h3>
+    <div class="fila">
+      <div class="campo"><label>Nombre *</label><input id="f_nombre"></div>
+      <div class="campo"><label>Teléfono</label><input id="f_tel"></div>
+    </div>
+    <div class="fila">
+      <div class="campo"><label>Email</label><input id="f_email"></div>
+      <div class="campo"><label>Etapa</label>
+        <select id="f_etapa">
+          <option value="nuevo">Nuevo</option>
+          <option value="contactado">Contactado</option>
+          <option value="calificado">Calificado</option>
+          <option value="cerrado">Cerrado</option>
+        </select>
+      </div>
+    </div>
+    <div class="campo"><label>¿Qué le interesa?</label><input id="f_interes"></div>
+    <div class="campo"><label>Notas internas</label><textarea id="f_notas" rows="2"></textarea></div>
+    <div class="campo"><label>Próximo seguimiento</label><input id="f_seguimiento" type="date"></div>
+
+    <div class="calif" id="calif"></div>
+
+    <div id="zonaChat" style="display:none;">
+      <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:6px;">Conversación con el lead — pega su mensaje y el agente IA redacta la respuesta y lo califica</label>
+      <div class="chat" id="chat"></div>
+      <div class="chatinput">
+        <input id="msgLead" placeholder="Mensaje que envió el cliente..." onkeydown="if(event.key==='Enter')enviarAgente()">
+        <button class="btn" onclick="enviarAgente()">🤖 Responder con IA</button>
+      </div>
+      <div class="cargando" id="cargando">El agente está pensando...</div>
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <div class="acciones">
+      <button class="btn danger" id="btnBorrar" onclick="borrarLead()" style="display:none;">Eliminar</button>
+      <button class="btn sec" onclick="cerrarModal()">Cerrar</button>
+      <button class="btn" onclick="guardarLead()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = '/api/crm';
+const ETAPAS = [
+  { id: 'nuevo', titulo: 'Nuevo' },
+  { id: 'contactado', titulo: 'Contactado' },
+  { id: 'calificado', titulo: 'Calificado' },
+  { id: 'cerrado', titulo: 'Cerrado' },
+];
+
+let leads = JSON.parse(localStorage.getItem('sinergia_crm_leads') || '[]');
+let negocio = localStorage.getItem('sinergia_crm_negocio') || '';
+let editandoId = null;
+
+function guardar() { localStorage.setItem('sinergia_crm_leads', JSON.stringify(leads)); }
+
+function configurarNegocio() {
+  const n = prompt('Describe tu negocio (ej. "venta de paneles solares residenciales en Monterrey"). El agente IA usa esto para vender mejor:', negocio);
+  if (n !== null) { negocio = n.trim(); localStorage.setItem('sinergia_crm_negocio', negocio); }
+}
+
+function pillScore(score) {
+  if (score == null) return '';
+  const clase = score >= 70 ? 'score-alto' : score >= 40 ? 'score-medio' : 'score-bajo';
+  return `<span class="pill ${clase}">Score ${score}</span>`;
+}
+
+function render() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  for (const etapa of ETAPAS) {
+    const items = leads.filter(l => l.etapa === etapa.id);
+    const col = document.createElement('div');
+    col.className = 'col';
+    col.innerHTML = `<h2>${etapa.titulo} <span>${items.length}</span></h2>` +
+      (items.length ? items.map(l => `
+        <div class="card" onclick="abrirDetalle('${l.id}')">
+          <div class="nombre">${esc(l.nombre)}</div>
+          <div class="interes">${esc(l.interes || 'Sin interés registrado')}</div>
+          <div class="meta">
+            ${pillScore(l.score)}
+            ${l.urgencia ? `<span class="pill">Urgencia: ${esc(l.urgencia)}</span>` : ''}
+            ${l.seguimiento ? `<span class="pill">📅 ${l.seguimiento}</span>` : ''}
+          </div>
+        </div>`).join('') : '<div class="vacio">Sin leads</div>');
+    board.appendChild(col);
+  }
+  // Seguimientos de hoy
+  const hoy = new Date().toISOString().slice(0, 10);
+  const pendientes = leads.filter(l => l.seguimiento && l.seguimiento <= hoy && l.etapa !== 'cerrado');
+  const banner = document.getElementById('hoy');
+  if (pendientes.length) {
+    banner.style.display = 'block';
+    banner.innerHTML = '📅 <b>Seguimientos pendientes:</b> ' + pendientes.map(l => esc(l.nombre)).join(', ');
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function abrirNuevo() {
+  editandoId = null;
+  document.getElementById('modalTitulo').textContent = 'Nuevo lead';
+  for (const id of ['f_nombre','f_tel','f_email','f_interes','f_notas','f_seguimiento']) document.getElementById(id).value = '';
+  document.getElementById('f_etapa').value = 'nuevo';
+  document.getElementById('zonaChat').style.display = 'none';
+  document.getElementById('calif').style.display = 'none';
+  document.getElementById('btnBorrar').style.display = 'none';
+  document.getElementById('overlay').classList.add('abierto');
+}
+
+function abrirDetalle(id) {
+  const l = leads.find(x => x.id === id);
+  if (!l) return;
+  editandoId = id;
+  document.getElementById('modalTitulo').textContent = l.nombre;
+  document.getElementById('f_nombre').value = l.nombre || '';
+  document.getElementById('f_tel').value = l.tel || '';
+  document.getElementById('f_email').value = l.email || '';
+  document.getElementById('f_interes').value = l.interes || '';
+  document.getElementById('f_notas').value = l.notas || '';
+  document.getElementById('f_seguimiento').value = l.seguimiento || '';
+  document.getElementById('f_etapa').value = l.etapa;
+  document.getElementById('zonaChat').style.display = 'block';
+  document.getElementById('btnBorrar').style.display = 'inline-block';
+  renderCalif(l);
+  renderChat(l);
+  document.getElementById('overlay').classList.add('abierto');
+}
+
+function renderCalif(l) {
+  const c = document.getElementById('calif');
+  if (l.score == null) { c.style.display = 'none'; return; }
+  c.style.display = 'block';
+  c.innerHTML = `
+    <div><b>Calificación IA:</b> ${pillScore(l.score)} &nbsp; Urgencia: <b>${esc(l.urgencia || '-')}</b></div>
+    <div>${esc(l.resumen || '')}</div>
+    <div>👉 <b>Siguiente acción:</b> ${esc(l.siguiente_accion || '-')}</div>`;
+}
+
+function renderChat(l) {
+  const chat = document.getElementById('chat');
+  const msgs = l.mensajes || [];
+  chat.innerHTML = msgs.length ? msgs.map(m => `
+    <div class="msg ${m.rol}">
+      <div class="quien">${m.rol === 'lead' ? '👤 Cliente' : '🤖 Agente'}</div>${esc(m.texto)}
+    </div>`).join('') : '<div class="vacio">Sin mensajes aún. Pega abajo lo que te escribió el cliente.</div>';
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function guardarLead() {
+  const nombre = document.getElementById('f_nombre').value.trim();
+  if (!nombre) { alert('El nombre es obligatorio'); return; }
+  const datos = {
+    nombre,
+    tel: document.getElementById('f_tel').value.trim(),
+    email: document.getElementById('f_email').value.trim(),
+    interes: document.getElementById('f_interes').value.trim(),
+    notas: document.getElementById('f_notas').value.trim(),
+    seguimiento: document.getElementById('f_seguimiento').value,
+    etapa: document.getElementById('f_etapa').value,
+  };
+  if (editandoId) {
+    Object.assign(leads.find(x => x.id === editandoId), datos);
+  } else {
+    leads.push({ id: crypto.randomUUID(), mensajes: [], score: null, ...datos });
+  }
+  guardar(); render(); cerrarModal();
+}
+
+function borrarLead() {
+  if (!editandoId || !confirm('¿Eliminar este lead?')) return;
+  leads = leads.filter(x => x.id !== editandoId);
+  guardar(); render(); cerrarModal();
+}
+
+function cerrarModal() { document.getElementById('overlay').classList.remove('abierto'); }
+
+async function enviarAgente() {
+  const l = leads.find(x => x.id === editandoId);
+  if (!l) return;
+  const input = document.getElementById('msgLead');
+  const texto = input.value.trim();
+  const err = document.getElementById('errorMsg');
+  err.style.display = 'none';
+  if (texto) {
+    l.mensajes = l.mensajes || [];
+    l.mensajes.push({ rol: 'lead', texto });
+    input.value = '';
+    guardar(); renderChat(l);
+  }
+  if (!(l.mensajes || []).length) { err.textContent = 'Escribe primero el mensaje del cliente.'; err.style.display = 'block'; return; }
+
+  document.getElementById('cargando').style.display = 'block';
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ negocio, lead: l, mensajes: l.mensajes }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error del servidor');
+    l.mensajes.push({ rol: 'agente', texto: data.respuesta });
+    l.score = data.score;
+    l.urgencia = data.urgencia;
+    l.resumen = data.resumen;
+    l.siguiente_accion = data.siguiente_accion;
+    if (data.etapa_sugerida && ETAPAS.some(e => e.id === data.etapa_sugerida)) {
+      l.etapa = data.etapa_sugerida;
+      document.getElementById('f_etapa').value = l.etapa;
+    }
+    guardar(); renderChat(l); renderCalif(l); render();
+  } catch (e) {
+    err.textContent = '⚠ ' + e.message;
+    err.style.display = 'block';
+  } finally {
+    document.getElementById('cargando').style.display = 'none';
+  }
+}
+
+render();
+</script>
+</body>
+</html>

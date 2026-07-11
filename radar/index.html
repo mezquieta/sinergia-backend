@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proyecto X — Radar</title>
+<script>if (sessionStorage.getItem('sinergia_oficina_ok') !== '1') location.replace('/oficina/');</script>
+<style>
+  :root {
+    --bg: #0f1117; --panel: #181b23; --panel2: #1f2330; --border: #2a2f3e;
+    --text: #e8eaf0; --muted: #8a90a3; --accent: #c2571b; --accent2: #e07b3a; --ok: #0ca30c; --bad: #d95b4a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  header h1 { font-size: 18px; }
+  header h1 span { color: var(--accent2); }
+  header a { color: var(--muted); font-size: 13px; text-decoration: none; }
+  main { max-width: 860px; margin: 0 auto; padding: 18px 16px 70px; }
+  .caja { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  .caja h3 { font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 12px; }
+  .cats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .cat { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 9px 16px; font-size: 13px; cursor: pointer; font-weight: 600; font-family: inherit; }
+  .cat.activa { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 14px; cursor: pointer; font-weight: 600; font-family: inherit; }
+  .btn:hover { background: var(--accent2); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn.mini { padding: 5px 10px; font-size: 12px; background: var(--panel2); border: 1px solid var(--border); color: var(--text); }
+  .idea { background: var(--panel2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .idea b { display: block; margin-bottom: 5px; font-size: 15px; }
+  .idea p { font-size: 13px; color: var(--muted); line-height: 1.55; margin-bottom: 9px; }
+  .idea .pie { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .idea .pie a { color: var(--accent2); font-size: 13px; text-decoration: none; }
+  .fuente { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; }
+  .estado { color: var(--muted); font-size: 13px; padding: 14px 0; text-align: center; }
+  .error-msg { color: var(--bad); font-size: 13px; padding: 8px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🛰 Radar de ideas <span>· Proyecto X</span></h1>
+  <a href="/oficina/">← volver a la oficina</a>
+</header>
+<main>
+  <div class="caja">
+    <h3>¿Qué andas buscando hoy?</h3>
+    <div class="cats">
+      <button class="cat activa" data-c="diseno" onclick="elegir('diseno')">🎨 Diseño web</button>
+      <button class="cat" data-c="prompts" onclick="elegir('prompts')">🪄 Prompts de IA</button>
+      <button class="cat" data-c="habilidades" onclick="elegir('habilidades')">🚀 Habilidades IA</button>
+    </div>
+    <button class="btn" id="btnBuscar" onclick="buscar()">🔎 Buscar ideas nuevas</button>
+    <div style="color:var(--muted); font-size:12px; margin-top:10px;">
+      Rastrea dev.to y Hacker News en tiempo real y la IA cura los hallazgos en español.
+      Las que te gusten se guardan en las Ideas de tu app de Contenido.</div>
+  </div>
+  <div id="resultados"></div>
+</main>
+
+<script>
+let categoria = 'diseno';
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function elegir(c) {
+  categoria = c;
+  document.querySelectorAll('.cat').forEach(b => b.classList.toggle('activa', b.dataset.c === c));
+}
+
+let ideasActuales = [];
+async function buscar() {
+  const out = document.getElementById('resultados');
+  const btn = document.getElementById('btnBuscar');
+  out.innerHTML = '<div class="caja"><div class="estado">🛰 Rastreando la web…</div></div>';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/radar', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'buscar', categoria }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error del servidor');
+    ideasActuales = data.ideas || [];
+    out.innerHTML = `<div class="caja"><h3>${ideasActuales.length} ideas encontradas ${data.curado ? '· curadas con IA ✨' : '· sin curar (la IA no respondió)'}</h3>
+      ${ideasActuales.map((i, n) => `<div class="idea">
+        <b>${esc(i.idea)}</b>
+        ${i.detalle ? `<p>${esc(i.detalle)}</p>` : ''}
+        <div class="pie">
+          <span style="display:flex; gap:8px; align-items:center;">
+            <span class="fuente">${esc(i.fuente)}</span>
+            <a href="${esc(i.url)}" target="_blank" rel="noopener">Ver original ↗</a></span>
+          <button class="btn mini" id="g${n}" onclick="guardarIdea(${n})">💡 Guardar idea</button>
+        </div></div>`).join('')}</div>`;
+  } catch (e) {
+    out.innerHTML = `<div class="caja"><div class="error-msg">⚠ ${esc(e.message)}</div></div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function guardarIdea(n) {
+  const i = ideasActuales[n];
+  if (!i) return;
+  const D = JSON.parse(localStorage.getItem('sinergia_contenido') || '{"posts":[],"ideas":[],"guiones":[],"carruseles":[],"metricas":[]}');
+  D.ideas.unshift({ id: crypto.randomUUID(), texto: i.idea + (i.url ? ' — ' + i.url : ''), fecha: new Date().toISOString().slice(0, 10) });
+  localStorage.setItem('sinergia_contenido', JSON.stringify(D));
+  const b = document.getElementById('g' + n);
+  b.textContent = '✔ Guardada';
+  b.disabled = true;
+}
+</script>
+</body>
+</html>
