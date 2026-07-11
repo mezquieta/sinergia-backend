@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sinergia Oficina</title>
+<title>Proyecto X</title>
 <style>
   :root {
     --bg: #0f1117; --panel: #181b23; --panel2: #1f2330; --border: #2a2f3e;
@@ -35,7 +35,7 @@
 </head>
 <body>
 <div class="tarjeta">
-  <h1>Sinergia <span>Oficina</span></h1>
+  <h1>Proyecto <span>X</span></h1>
 
   <div id="candado">
     <div class="sub">Zona privada — escribe el PIN para entrar</div>
@@ -51,6 +51,7 @@
       <a class="app" href="/voz/"><div class="icono">🎙</div><b>Voz</b><small>Transcribir reuniones, minutas y dictado.</small></a>
       <a class="app" href="/panel/"><div class="icono">📊</div><b>Panel</b><small>Dashboards: ejecutivo, ventas, finanzas y más.</small></a>
       <a class="app" href="/contenido/"><div class="icono">📱</div><b>Contenido</b><small>Calendario de posts, métricas, guiones y carruseles IA.</small></a>
+      <a class="app" href="/radar/"><div class="icono">🛰</div><b>Radar</b><small>Ideas nuevas de diseño web, prompts y habilidades IA.</small></a>
     </div>
     <div class="salir"><button onclick="salir()">🔒 Cerrar sesión</button></div>
   </div>
@@ -59,7 +60,7 @@
 <script>
 // PIN de acceso: se guarda solo el hash SHA-256, no el PIN.
 // Para cambiarlo: genera el hash del nuevo PIN y reemplaza esta constante.
-const HASH_PIN = '158a323a7ba44870f23d96f1516dd70aa48e9a72db4ebb026b0a89e212a208ab';
+const HASH_PIN = '9607bf9d54d419afa0183127cbd4ed038be4edc286c147b609a772a157b76fc6';
 const LLAVE = 'sinergia_oficina_ok';
 
 async function sha256(txt) {
