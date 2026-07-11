@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 export default async function handler(request, response) {
     response.setHeader('Access-Control-Allow-Credentials', true);
@@ -28,7 +28,7 @@ export default async function handler(request, response) {
             const temaSecreto = matrixTemasOcultos[Math.floor(Math.random() * matrixTemasOcultos.length)];
 
             const geminiResponse = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
+                model: 'gemini-2.0-flash',
                 contents: `Context framework: ${temaSecreto}. User level: ${level}. Design a starting question for an English dialogue simulation. Return strictly a raw valid JSON object with keys: "setup_title" and "ai_opening". Do not mention Qatar or Doha explicitly under any circumstance.`,
                 config: { responseMimeType: "application/json" }
             });
@@ -44,13 +44,15 @@ export default async function handler(request, response) {
             const promptFinal = `Character dialogue line was: "${currentPrompt}". User physically replied by voice: "${textInput}". Evaluate the grammar. Context environment setup: ${systemInfo}. ${strictness}. Return strictly a raw JSON object string with keys: "reply" (your next conversational response sentence), "correction" (constructive language tip in English), and "xp" (the score integer). No markdown formatting or backticks.`;
 
             const geminiResponse = await ai.models.generateContent({
-                model: 'gemini-1.5-flash',
+                model: 'gemini-2.0-flash',
                 contents: promptFinal,
                 config: { responseMimeType: "application/json" }
             });
 
             return response.status(200).json(JSON.parse(geminiResponse.text));
         }
+
+        return response.status(400).json({ error: 'Unknown action' });
 
     } catch (error) {
         console.error("Vercel Server Error:", error);
