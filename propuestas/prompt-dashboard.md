@@ -173,4 +173,4 @@ normalmente se pierde en la operación."
   entre sí (los totales de Ventas cuadran con el Ejecutivo, etc.).
 - Sin errores en consola; funciona en móvil; ningún recurso externo (CDNs).
 - Verifica el flujo completo en navegador antes de dar por terminado, y
-  navega las 6 secciones con datos demo.
+  navega las 7 secciones con datos demo.
