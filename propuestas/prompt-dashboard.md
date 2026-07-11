@@ -1,8 +1,8 @@
 # Prompt: Suite de dashboards de negocio "Sinergia Panel"
 
-Prompt detallado para construir la suite de dashboards inspirada en las 6 secciones
-(Ejecutivo, Ventas, Financiero, Marketing, Equipo/RRHH, Objetivos). Copiar y pegar
-completo en Claude Code / Fable.
+Prompt detallado para construir la suite de dashboards inspirada en las 7 secciones
+(Ejecutivo, Ventas, Financiero, Marketing, Operaciones, Equipo/RRHH, Objetivos).
+Copiar y pegar completo en Claude Code / Fable.
 
 ---
 
@@ -36,7 +36,7 @@ como sitio estático + funciones serverless en `api/`).
   "vs. periodo anterior" en todos los KPIs, con flecha ↑/↓ y variación en %
   (verde si mejora, rojo si empeora; ojo: en gastos/rotación/CAC "bajar" es
   mejorar).
-- Navegación: sidebar fija con las 6 secciones + Configuración. En móvil,
+- Navegación: sidebar fija con las 7 secciones + Configuración. En móvil,
   colapsa a menú. Cada sección es una vista de la misma SPA.
 
 ## Sección 1 — Dashboard Ejecutivo
@@ -58,7 +58,8 @@ como sitio estático + funciones serverless en `api/`).
 
 "Para exigirle más a tu equipo pero con datos."
 
-- 4 KPIs: Facturación del periodo, Pedidos, Ticket medio (AOV), Ítems vendidos.
+- 5 KPIs: Facturación del periodo, Pedidos, Ticket medio (AOV), Ítems vendidos,
+  y Conversión comercial % (ventas cerradas / oportunidades).
 - Ranking de vendedores: tabla con #, Vendedor, Meta, Realizado, % de meta
   con barra de progreso — verde ≥100%, ámbar 85-99%, rojo <85%. Ordenada de
   mayor a menor para que el equipo compita por el primer puesto.
@@ -79,7 +80,10 @@ como sitio estático + funciones serverless en `api/`).
   verdes (positivo) / rojas (negativo).
 - Panel "Indicadores de salud" con semáforo ✔/⚠ contra metas configurables:
   margen neto (meta > 25%), liquidez corriente (> 1.20), endeudamiento
-  (< 60%), flujo de caja (> 0), rotación de inventario (> 2.5).
+  (< 60%), flujo de caja (> 0), rotación de inventario (> 2.5),
+  punto de equilibrio (% alcanzado de la facturación necesaria para cubrir
+  costos del mes) y cobertura de caja ("la caja disponible cubre X meses de
+  gastos" al ritmo actual).
 - Alertas financieras: lista visual cuando un indicador cae bajo su meta,
   con severidad y sugerencia de la IA.
 - Captura: movimientos de ingreso/gasto con categoría, o import CSV.
@@ -88,7 +92,8 @@ como sitio estático + funciones serverless en `api/`).
 
 "Saber qué canal realmente trae plata, no likes."
 
-- 4 KPIs: Inversión total, CAC medio, ROI medio (x), Conversión media %.
+- 6 KPIs: Inversión total, Leads generados, CAC medio, Costo por lead,
+  ROAS/ROI medio (x), CTR promedio % y Conversión media %.
 - Dona: inversión por canal (Google Ads, Meta Ads, Instagram Ads, LinkedIn,
   YouTube, Otros — editables).
 - Tabla "Desempeño por canal": canal, inversión, CAC, ROI, conversión %;
@@ -98,8 +103,31 @@ como sitio estático + funciones serverless en `api/`).
 - Barras horizontales: ROI por campaña (top 5).
 - Ventas atribuidas: cada campaña puede registrar ventas generadas para
   calcular su ROI = ventas atribuidas / inversión.
+- Tarjetas destacadas: "Campaña top" del periodo y "Tasa de conversión de
+  landing" %, con variación vs. periodo anterior.
+- Bloque "Insights clave" por canal (ej. "email marketing tiene el mejor
+  retorno", "Meta Ads genera más volumen de leads") generado por la IA.
 
-## Sección 5 — Equipo / RRHH
+## Sección 5 — Operaciones
+
+"Controla el día a día sin perder velocidad: vuelve visible lo que
+normalmente se pierde en la operación."
+
+- 6 KPIs: Órdenes procesadas, Entregas a tiempo %, Tiempo promedio de
+  despacho (horas), Nivel de servicio %, Rotación de inventario, Quiebres
+  de stock — cada uno con variación vs. periodo anterior (ojo: tiempo de
+  despacho y quiebres mejoran al BAJAR).
+- Gráfica de línea: órdenes procesadas, tendencia semanal (Lun-Dom).
+- Barras horizontales: cumplimiento por área (Logística, Almacén, Despacho,
+  Compras, Transporte) en %.
+- Panel "Estado de inventario clave": lista de productos con semáforo
+  🟢 stock alto / 🟡 stock medio / 🔴 stock bajo.
+- Tabla "Cumplimiento por bodega/sucursal": bodega, cumplimiento %,
+  variación vs. mes anterior.
+- Alertas operacionales generadas por reglas + IA: productos con stock bajo,
+  mejoras/deterioros de tiempos de despacho, bodegas que requieren revisión.
+
+## Sección 6 — Equipo / RRHH
 
 "Dejar de manejar personas por sensación."
 
@@ -113,7 +141,7 @@ como sitio estático + funciones serverless en `api/`).
   (activo/baja), desempeño (1-5). Las altas/bajas alimentan rotación y
   evolución del equipo automáticamente.
 
-## Sección 6 — Objetivos
+## Sección 7 — Objetivos
 
 "Saber si estás cerca o lejos de la meta."
 
@@ -122,8 +150,9 @@ como sitio estático + funciones serverless en `api/`).
 - KPI "Proyección de cierre": extrapola el ritmo actual del periodo
   transcurrido y muestra si quedará arriba o abajo de la meta (con % y
   tendencia); KPI "Faltan": monto restante y % para la meta.
-- Anillos de cumplimiento por área: Ventas, Financiero, Marketing, RRHH,
-  Producto, Soporte — cada uno con % y realizado/meta, coloreado verde
+- Anillos de cumplimiento por área: Ventas, Financiero, Marketing,
+  Operaciones, RRHH, Producto, Soporte — cada uno con % y realizado/meta,
+  coloreado verde
   ≥90%, ámbar 60-89%, rojo <60%.
 - Tabla "Progreso consolidado": área, barra de cumplimiento, realizado,
   meta, estado ("por encima de la meta" / "en riesgo" / "atrasado").
@@ -140,7 +169,7 @@ como sitio estático + funciones serverless en `api/`).
 
 ## Criterios de aceptación
 
-- Con "Cargar datos de ejemplo", las 6 secciones se ven pobladas y coherentes
+- Con "Cargar datos de ejemplo", las 7 secciones se ven pobladas y coherentes
   entre sí (los totales de Ventas cuadran con el Ejecutivo, etc.).
 - Sin errores en consola; funciona en móvil; ningún recurso externo (CDNs).
 - Verifica el flujo completo en navegador antes de dar por terminado, y
