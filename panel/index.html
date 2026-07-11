@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sinergia Panel</title>
+<style>
+  :root {
+    --bg: #0f1117; --panel: #181b23; --panel2: #1f2330; --border: #2a2f3e;
+    --text: #e8eaf0; --muted: #8a90a3; --accent: #c2571b; --accent2: #e07b3a;
+    --ok: #0ca30c; --warn: #fab219; --bad: #d03b3b;
+    --s1: #3987e5; --s2: #199e70; --s3: #c98500; --s4: #9085e9; --s5: #e66767; --s6: #d95926;
+    --grid: #2a2f3e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; min-height: 100vh; }
+  .layout { display: flex; min-height: 100vh; }
+  aside { width: 210px; background: var(--panel); border-right: 1px solid var(--border); padding: 16px 10px; flex-shrink: 0; }
+  aside .logo { font-size: 17px; font-weight: 700; padding: 0 10px 14px; }
+  aside .logo span { color: var(--accent2); }
+  .navbtn { display: block; width: 100%; text-align: left; background: none; border: none; color: var(--muted); padding: 10px 12px; border-radius: 8px; font-size: 14px; cursor: pointer; margin-bottom: 2px; font-family: inherit; }
+  .navbtn:hover { background: var(--panel2); color: var(--text); }
+  .navbtn.activo { background: var(--panel2); color: var(--accent2); font-weight: 600; }
+  main { flex: 1; padding: 18px 22px 60px; min-width: 0; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .topbar h1 { font-size: 19px; }
+  .topbar .sub { font-size: 13px; color: var(--muted); }
+  select, input, button.btn { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 11px; font-size: 13px; font-family: inherit; }
+  button.btn { cursor: pointer; font-weight: 600; }
+  button.btn.primario { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.btn:hover { border-color: var(--accent2); }
+  .grid { display: grid; gap: 12px; }
+  .kpis { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 12px; }
+  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+  .kpi .lbl { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .kpi .val { font-size: 24px; font-weight: 700; }
+  .kpi .dif { font-size: 12px; margin-top: 6px; }
+  .kpi .dif small { color: var(--muted); font-size: 11px; }
+  .dif.up { color: var(--ok); } .dif.down { color: var(--bad); }
+  .cols2 { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 980px) { .cols2 { grid-template-columns: 1fr; } }
+  .caja { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; min-width: 0; }
+  .caja h3 { font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 12px; }
+  .leyenda { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; padding: 7px 8px; border-bottom: 1px solid var(--border); font-size: 12px; }
+  td { padding: 8px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: none; }
+  .barra { background: var(--panel2); border-radius: 99px; height: 8px; overflow: hidden; min-width: 70px; }
+  .barra > div { height: 100%; border-radius: 99px; }
+  .pillmini { padding: 2px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); white-space: nowrap; }
+  .hbar-row { display: grid; grid-template-columns: 110px 1fr 52px; align-items: center; gap: 10px; margin-bottom: 9px; font-size: 13px; }
+  .hbar-row .track { background: var(--panel2); border-radius: 99px; height: 12px; }
+  .hbar-row .fill { height: 100%; border-radius: 99px; }
+  .hbar-row .v { text-align: right; font-variant-numeric: tabular-nums; }
+  .alerta { display: flex; gap: 9px; align-items: flex-start; background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px; }
+  .alerta.alta { border-color: var(--bad); } .alerta.media { border-color: var(--warn); }
+  .semaforo { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; }
+  .rings { display: flex; gap: 14px; flex-wrap: wrap; justify-content: space-around; }
+  .ringbox { text-align: center; font-size: 12px; color: var(--muted); }
+  .ringbox b { color: var(--text); }
+  #tip { position: fixed; pointer-events: none; background: #0b0d13; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12px; z-index: 50; display: none; max-width: 240px; line-height: 1.5; }
+  #tip b { display: block; margin-bottom: 2px; }
+  .insights li { margin-left: 18px; margin-bottom: 7px; font-size: 13px; line-height: 1.5; }
+  .vacio { color: var(--muted); font-size: 13px; text-align: center; padding: 26px 0; }
+  .fila-conf { display: grid; grid-template-columns: 200px 1fr; gap: 10px; align-items: center; margin-bottom: 10px; font-size: 13px; }
+  svg text { font-family: system-ui, sans-serif; }
+  #menuMovil { display: none; }
+  @media (max-width: 760px) {
+    aside { position: fixed; z-index: 40; height: 100%; left: -220px; transition: left .2s; }
+    aside.abierto { left: 0; }
+    #menuMovil { display: inline-block; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside id="sidebar">
+    <div class="logo">Sinergia <span>Panel</span></div>
+    <button class="navbtn activo" data-v="ejecutivo" onclick="ir('ejecutivo')">📊 Ejecutivo</button>
+    <button class="navbtn" data-v="ventas" onclick="ir('ventas')">🛒 Ventas</button>
+    <button class="navbtn" data-v="finanzas" onclick="ir('finanzas')">💰 Financiero</button>
+    <button class="navbtn" data-v="marketing" onclick="ir('marketing')">📣 Marketing</button>
+    <button class="navbtn" data-v="operaciones" onclick="ir('operaciones')">⚙️ Operaciones</button>
+    <button class="navbtn" data-v="rrhh" onclick="ir('rrhh')">👥 Equipo / RRHH</button>
+    <button class="navbtn" data-v="objetivos" onclick="ir('objetivos')">🎯 Objetivos</button>
+    <button class="navbtn" data-v="config" onclick="ir('config')">🔧 Configuración</button>
+  </aside>
+  <main>
+    <div class="topbar">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button class="btn" id="menuMovil" onclick="document.getElementById('sidebar').classList.toggle('abierto')">☰</button>
+        <div>
+          <h1 id="titulo">Ejecutivo</h1>
+          <div class="sub" id="subtitulo"></div>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <select id="periodo" onchange="render()">
+          <option value="mes">Mes actual</option>
+          <option value="trim" selected>Trimestre</option>
+          <option value="ano">Año</option>
+        </select>
+        <button class="btn" onclick="exportarCSV()">⬇ CSV</button>
+        <button class="btn primario" onclick="cargarDemo()">Cargar datos de ejemplo</button>
+      </div>
+    </div>
+    <div id="vista"></div>
+  </main>
+</div>
+<div id="tip"></div>
+
+<script>
+/* ============ estado ============ */
+const CLAVE = 'sinergia_panel_datos';
+const C = { s1:'#3987e5', s2:'#199e70', s3:'#c98500', s4:'#9085e9', s5:'#e66767', s6:'#d95926' };
+const SERIE = [C.s1, C.s2, C.s3, C.s4, C.s5, C.s6];
+let D = JSON.parse(localStorage.getItem(CLAVE) || 'null');
+let vista = 'ejecutivo';
+
+function guardar() { localStorage.setItem(CLAVE, JSON.stringify(D)); }
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ============ datos demo (deterministas y coherentes entre secciones) ============ */
+function cargarDemo() {
+  const MESES = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07'];
+  const fact =    [152000, 161000, 158000, 170000, 182000, 191000, 198000];
+  const gastos =  [118000, 121000, 125000, 128000, 131000, 136000, 139000];
+  const vend = ['Valeria Luna','Julián Pérez','Laura Méndez','Camilo Torres','Sara Rojas'];
+  const vendPeso = [0.28, 0.24, 0.20, 0.16, 0.12];
+  const canalesV = ['Sitio web','Marketplace','Ventas directas','Otros'];
+  const canalPeso = [0.43, 0.28, 0.19, 0.10];
+  const prods = [['Producto A',0.40,24],['Producto B',0.29,21],['Producto C',0.20,19],['Producto D',0.11,16]];
+  const canalesM = ['Google Ads','Meta Ads','Email','Orgánico'];
+
+  D = {
+    config: {
+      negocio: 'Mi negocio', moneda: 'USD',
+      metaTrimestreTotal: 600000,
+      metasArea: { Ventas: 570000, Financiero: 190000, Marketing: 260, Operaciones: 94, RRHH: 12, Producto: 300000, Soporte: 90 },
+      salud: { margen: 25, liquidez: 1.2, endeudamiento: 60, rotInv: 2.5 },
+    },
+    colaboradores: [
+      ['Ana Ríos','Ventas','2024-03-10','',5],['Luis Vega','Ventas','2023-11-02','',4],
+      ['Marta Gil','Logística','2024-06-15','',4],['Pedro Sanz','Logística','2025-01-20','2026-05-30',3],
+      ['Eva Cano','Marketing','2024-09-01','',5],['Hugo Mora','Finanzas','2023-05-12','',4],
+      ['Iris Peña','Soporte','2025-03-08','',3],['Noa Bravo','Soporte','2025-10-01','2026-03-15',2],
+      ['Raúl Peña','Almacén','2024-01-25','',4],['Lía Marín','Almacén','2025-07-14','',4],
+    ].map(c => ({ nombre: c[0], area: c[1], ingreso: c[2], baja: c[3], desempeno: c[4] })),
+    meses: MESES.map((mes, i) => {
+      const f = fact[i];
+      return {
+        mes,
+        ventas: {
+          facturacion: f, pedidos: Math.round(f / 128), items: Math.round(f / 50),
+          oportunidades: Math.round(f / 128 / 0.18), cerradas: Math.round(f / 128),
+          porCanal: Object.fromEntries(canalesV.map((c, j) => [c, Math.round(f * canalPeso[j])])),
+          productos: prods.map(p => ({ nombre: p[0], facturacion: Math.round(f * p[1]), unidades: Math.round(f * p[1] / 55), margen: p[2] })),
+          vendedores: vend.map((v, j) => ({ nombre: v, meta: Math.round(f * 1.02 * vendPeso[j]), realizado: Math.round(f * vendPeso[j] * [1.06, 0.98, 0.95, 0.88, 0.83][j]) })),
+        },
+        finanzas: {
+          ingresos: f, gastos: gastos[i], entradas: Math.round(f * 1.05), salidas: Math.round(gastos[i] * 1.04),
+          caja: 82000 + i * 9000, liquidez: 1.5 + i * 0.05, endeudamiento: 52 - i, rotInv: 2.1 + i * 0.12,
+        },
+        mkt: {
+          canales: canalesM.map((c, j) => {
+            const inv = Math.round(f * 0.075 * [0.38, 0.32, 0.08, 0.22][j]);
+            const clics = Math.round(inv * [1.9, 2.2, 9, 4][j]);
+            return { canal: c, inversion: inv, impresiones: clics * 35, clics,
+                     leads: Math.round(clics * 0.11), ventas: Math.round(inv * [4.1, 4.6, 6.8, 5.2][j]) };
+          }),
+          campanas: [
+            { nombre: 'Lanzamiento Producto X', inversion: Math.round(f * 0.03), ventas: Math.round(f * 0.03 * 7.2) },
+            { nombre: 'Remarketing Q' + (Math.floor(i / 3) + 1), inversion: Math.round(f * 0.02), ventas: Math.round(f * 0.02 * 6.1) },
+            { nombre: 'Email clientes', inversion: Math.round(f * 0.008), ventas: Math.round(f * 0.008 * 8.3) },
+            { nombre: 'Búsqueda marca', inversion: Math.round(f * 0.012), ventas: Math.round(f * 0.012 * 5.4) },
+            { nombre: 'Prospección fría', inversion: Math.round(f * 0.015), ventas: Math.round(f * 0.015 * 3.1) },
+          ],
+          landing: { visitas: 4200 + i * 300, conversiones: Math.round((4200 + i * 300) * (0.098 + i * 0.003)) },
+        },
+        ops: {
+          ordenes: 2900 + i * 95, semana: [310, 388, 402, 496, 462, 305, 214].map(x => x + i * 12),
+          entregasATiempo: 89 + i * 0.8, despachoHoras: 8.4 - i * 0.25, nivelServicio: 93 + i * 0.5,
+          rotInv: 2.1 + i * 0.12, quiebres: Math.max(0, 6 - i),
+          areas: [['Logística', 92 + i * 0.9], ['Almacén', 90 + i * 0.8], ['Despacho', 88 + i * 0.8], ['Compras', 86 + i * 0.7], ['Transporte', 83 + i * 0.6]].map(a => ({ area: a[0], cumplimiento: Math.min(99, Math.round(a[1])) })),
+          bodegas: [['Bodega Norte', 93 + i * 0.6], ['Bodega Centro', 90 + i * 0.5], ['Bodega Sur', 86 + i * 0.4]].map(b => ({ nombre: b[0], cumplimiento: Math.round(b[1]) })),
+          inventario: [['Producto A', 'alto'], ['Producto B', 'medio'], ['Producto C', i < 4 ? 'bajo' : 'medio'], ['Producto D', 'alto']].map(p => ({ producto: p[0], nivel: p[1] })),
+        },
+        rrhh: {
+          costoContratacion: 8600 - i * 60,
+          ausentismo: [['Ventas', 2.8], ['Logística', 4.6], ['Almacén', 4.1], ['Marketing', 2.2], ['Soporte', 3.4]].map(a => ({ area: a[0], pct: Math.max(1, a[1] - i * 0.1) })),
+        },
+      };
+    }),
+  };
+  guardar();
+  render();
+}
+
+/* ============ periodos ============ */
+function rangos() {
+  const n = { mes: 1, trim: 3, ano: 12 }[document.getElementById('periodo').value];
+  const total = D.meses.length;
+  const cur = D.meses.slice(Math.max(0, total - n));
+  const prev = D.meses.slice(Math.max(0, total - 2 * n), Math.max(0, total - n));
+  return { cur, prev };
+}
+const sum = (arr, fn) => arr.reduce((a, x) => a + (fn(x) || 0), 0);
+const avg = (arr, fn) => arr.length ? sum(arr, fn) / arr.length : 0;
+function delta(cur, prev) { return prev ? ((cur - prev) / Math.abs(prev)) * 100 : null; }
+
+/* ============ formato ============ */
+function money(n) {
+  const m = D?.config?.moneda || 'USD';
+  const abs = Math.abs(n);
+  const s = abs >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : abs >= 1e4 ? (n / 1e3).toFixed(0) + 'K' : Math.round(n).toLocaleString('es');
+  return (m === 'USD' ? 'US$ ' : m + ' ') + s;
+}
+const pct = n => (n == null ? '—' : n.toFixed(1).replace('.0', '') + '%');
+function mesCorto(m) { return ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][+m.slice(5) - 1]; }
+
+function kpi(lbl, val, d, inverso = false, nota = 'vs. periodo anterior') {
+  let difHtml = `<small>sin comparación</small>`;
+  if (d != null && isFinite(d)) {
+    const bueno = inverso ? d < 0 : d >= 0;
+    difHtml = `<span class="dif ${bueno ? 'up' : 'down'}">${d >= 0 ? '↑' : '↓'} ${Math.abs(d).toFixed(1)}%</span> <small>${nota}</small>`;
+  }
+  return `<div class="kpi"><div class="lbl">${lbl}</div><div class="val">${val}</div><div class="dif">${difHtml}</div></div>`;
+}
+
+/* ============ gráficas SVG ============ */
+const tip = () => document.getElementById('tip');
+document.addEventListener('mousemove', e => { const t = tip(); if (t.style.display === 'block') { t.style.left = Math.min(e.clientX + 14, innerWidth - 250) + 'px'; t.style.top = (e.clientY + 14) + 'px'; } });
+function mostrarTip(html) { const t = tip(); t.innerHTML = html; t.style.display = 'block'; }
+function ocultarTip() { tip().style.display = 'none'; }
+
+function lineChart(labels, series, { h = 180, fmt = money } = {}) {
+  const W = 600, PL = 8, PR = 8, PT = 12, PB = 22;
+  const all = series.flatMap(s => s.vals);
+  const max = Math.max(...all) * 1.08, min = Math.min(0, ...all);
+  const x = i => PL + i * (W - PL - PR) / Math.max(1, labels.length - 1);
+  const y = v => PT + (h - PT - PB) * (1 - (v - min) / (max - min || 1));
+  let g = '';
+  for (let k = 0; k <= 3; k++) { const gy = PT + k * (h - PT - PB) / 3; g += `<line x1="${PL}" y1="${gy}" x2="${W - PR}" y2="${gy}" stroke="var(--grid)" stroke-width="1"/>`; }
+  let paths = series.map(s =>
+    `<path d="${s.vals.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ')}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round"/>` +
+    (labels.length <= 14 ? s.vals.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="${s.color}" stroke="var(--panel)" stroke-width="2"/>`).join('') : '')
+  ).join('');
+  const labs = labels.map((l, i) => `<text x="${x(i)}" y="${h - 6}" font-size="10" fill="var(--muted)" text-anchor="middle">${l}</text>`).join('');
+  const colW = (W - PL - PR) / Math.max(1, labels.length - 1);
+  const hover = labels.map((l, i) =>
+    `<rect x="${x(i) - colW / 2}" y="0" width="${colW}" height="${h}" fill="transparent"
+      onmouseenter='mostrarTip(${JSON.stringify(`<b>${l}</b>` + series.map(s => `<span style="color:${s.color}">●</span> ${s.nombre}: ${fmt(s.vals[i])}`).join('<br>')).replace(/'/g, "&#39;")})' onmouseleave="ocultarTip()"/>`).join('');
+  const leyenda = series.length > 1 ? `<div class="leyenda">${series.map(s => `<span><i style="background:${s.color}"></i>${s.nombre}</span>`).join('')}</div>` : '';
+  return leyenda + `<svg viewBox="0 0 ${W} ${h}" width="100%">${g}${paths}${labs}${hover}</svg>`;
+}
+
+function barChart(labels, series, { h = 180, fmt = money } = {}) {
+  const W = 600, PL = 8, PR = 8, PT = 12, PB = 22;
+  const max = Math.max(...series.flatMap(s => s.vals)) * 1.1 || 1;
+  const grupoW = (W - PL - PR) / labels.length;
+  const barW = Math.min(26, (grupoW - 8) / series.length - 2);
+  let g = '';
+  for (let k = 0; k <= 3; k++) { const gy = PT + k * (h - PT - PB) / 3; g += `<line x1="${PL}" y1="${gy}" x2="${W - PR}" y2="${gy}" stroke="var(--grid)" stroke-width="1"/>`; }
+  let barras = '', labs = '', hover = '';
+  labels.forEach((l, i) => {
+    const cx = PL + i * grupoW + grupoW / 2;
+    series.forEach((s, j) => {
+      const v = s.vals[i], bh = (h - PT - PB) * v / max;
+      const bx = cx - (series.length * (barW + 2)) / 2 + j * (barW + 2);
+      barras += `<rect x="${bx}" y="${h - PB - bh}" width="${barW}" height="${Math.max(1, bh)}" rx="4" fill="${s.color}"/>`;
+    });
+    labs += `<text x="${cx}" y="${h - 6}" font-size="10" fill="var(--muted)" text-anchor="middle">${l}</text>`;
+    hover += `<rect x="${PL + i * grupoW}" y="0" width="${grupoW}" height="${h}" fill="transparent"
+      onmouseenter='mostrarTip(${JSON.stringify(`<b>${l}</b>` + series.map(s => `<span style="color:${s.color}">●</span> ${s.nombre}: ${fmt(s.vals[i])}`).join('<br>')).replace(/'/g, "&#39;")})' onmouseleave="ocultarTip()"/>`;
+  });
+  const leyenda = series.length > 1 ? `<div class="leyenda">${series.map(s => `<span><i style="background:${s.color}"></i>${s.nombre}</span>`).join('')}</div>` : '';
+  return leyenda + `<svg viewBox="0 0 ${W} ${h}" width="100%">${g}${barras}${labs}${hover}</svg>`;
+}
+
+function donut(items, { fmt = money } = {}) {
+  const total = sum(items, x => x.valor) || 1;
+  const R = 60, cx = 75, cy = 75, grosor = 22;
+  let ang = -Math.PI / 2, arcos = '';
+  items.forEach((it, i) => {
+    const frac = it.valor / total, a2 = ang + frac * 2 * Math.PI - 0.03;
+    const x1 = cx + R * Math.cos(ang), y1 = cy + R * Math.sin(ang);
+    const x2 = cx + R * Math.cos(a2), y2 = cy + R * Math.sin(a2);
+    arcos += `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${R} ${R} 0 ${frac > 0.5 ? 1 : 0} 1 ${x2.toFixed(1)} ${y2.toFixed(1)}"
+      fill="none" stroke="${SERIE[i % SERIE.length]}" stroke-width="${grosor}"
+      onmouseenter='mostrarTip(${JSON.stringify(`<b>${esc(it.nombre)}</b>${fmt(it.valor)} · ${(it.valor / total * 100).toFixed(1)}%`).replace(/'/g, "&#39;")})' onmouseleave="ocultarTip()"/>`;
+    ang = a2 + 0.03;
+  });
+  const leyenda = items.map((it, i) =>
+    `<div style="display:flex; justify-content:space-between; gap:10px; font-size:13px; margin-bottom:7px;">
+      <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${SERIE[i % SERIE.length]};margin-right:6px;"></i>${esc(it.nombre)}</span>
+      <span style="color:var(--muted); font-variant-numeric:tabular-nums;">${fmt(it.valor)} · ${(it.valor / total * 100).toFixed(0)}%</span></div>`).join('');
+  return `<div style="display:flex; gap:18px; align-items:center; flex-wrap:wrap;">
+    <svg viewBox="0 0 150 150" width="150" style="flex-shrink:0;">${arcos}
+      <text x="75" y="71" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">${fmt(total)}</text>
+      <text x="75" y="88" text-anchor="middle" font-size="10" fill="var(--muted)">Total</text></svg>
+    <div style="flex:1; min-width:170px;">${leyenda}</div></div>`;
+}
+
+function hbars(items, { fmt = pct, color = C.s1, max = 100 } = {}) {
+  return items.map(it => `
+    <div class="hbar-row">
+      <span style="color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(it.nombre)}</span>
+      <div class="track"><div class="fill" style="width:${Math.min(100, it.valor / max * 100)}%; background:${it.color || color};"></div></div>
+      <span class="v">${fmt(it.valor)}</span>
+    </div>`).join('');
+}
+
+function ring(p, meta, etiqueta) {
+  const color = p >= 90 ? 'var(--ok)' : p >= 60 ? 'var(--warn)' : 'var(--bad)';
+  const R = 34, circ = 2 * Math.PI * R;
+  return `<div class="ringbox">
+    <svg viewBox="0 0 84 84" width="84">
+      <circle cx="42" cy="42" r="${R}" fill="none" stroke="var(--panel2)" stroke-width="9"/>
+      <circle cx="42" cy="42" r="${R}" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round"
+        stroke-dasharray="${(Math.min(100, p) / 100 * circ).toFixed(1)} ${circ.toFixed(1)}" transform="rotate(-90 42 42)"/>
+      <text x="42" y="47" text-anchor="middle" font-size="16" font-weight="700" fill="var(--text)">${Math.round(p)}%</text>
+    </svg>
+    <div><b>${esc(etiqueta)}</b></div><div>${esc(meta)}</div></div>`;
+}
+
+/* ============ IA insights ============ */
+async function pedirInsights(seccion, kpis, contId) {
+  const cont = document.getElementById(contId);
+  cont.innerHTML = '<div class="vacio">✨ Analizando…</div>';
+  try {
+    const res = await fetch('/api/panel', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'insights', seccion, negocio: D.config.negocio, kpis }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error del servidor');
+    cont.innerHTML = `<ul class="insights">${(data.insights || []).map(i => `<li>${esc(i)}</li>`).join('')}</ul>` +
+      (data.alertas || []).map(a => `<div class="alerta ${esc(a.severidad)}">⚠ ${esc(a.texto)}</div>`).join('');
+  } catch (e) {
+    cont.innerHTML = `<div class="vacio">⚠ ${esc(e.message)}</div>`;
+  }
+}
+function btnInsights(seccion, kpis, contId) {
+  window['_k_' + contId] = kpis;
+  return `<div class="caja"><h3>✨ Insights de acción</h3>
+    <div id="${contId}"><div class="vacio">Pulsa el botón para que la IA analice esta sección.</div></div>
+    <button class="btn" style="margin-top:8px;" onclick='pedirInsights("${seccion}", window["_k_${contId}"], "${contId}")'>✨ Generar insights</button></div>`;
+}
+
+/* ============ vistas ============ */
+function ir(v) {
+  vista = v;
+  document.querySelectorAll('.navbtn').forEach(b => b.classList.toggle('activo', b.dataset.v === v));
+  document.getElementById('sidebar').classList.remove('abierto');
+  render();
+}
+
+function render() {
+  const el = document.getElementById('vista');
+  const titulos = { ejecutivo: 'Ejecutivo', ventas: 'Ventas', finanzas: 'Financiero', marketing: 'Marketing', operaciones: 'Operaciones', rrhh: 'Equipo / RRHH', objetivos: 'Objetivos', config: 'Configuración' };
+  document.getElementById('titulo').textContent = titulos[vista];
+  if (!D || !D.meses?.length) {
+    document.getElementById('subtitulo').textContent = '';
+    el.innerHTML = `<div class="caja"><div class="vacio">No hay datos todavía.<br><br>
+      Pulsa <b>“Cargar datos de ejemplo”</b> arriba para ver el panel funcionando,<br>o entra a Configuración para empezar desde cero.</div></div>`;
+    return;
+  }
+  const { cur, prev } = rangos();
+  document.getElementById('subtitulo').textContent = D.config.negocio + ' · ' + cur.map(m => mesCorto(m.mes)).join(', ') + ' 2026';
+  el.innerHTML = ({ ejecutivo, ventas, finanzas, marketing, operaciones, rrhh, objetivos, config })[vista](cur, prev);
+}
+
+/* ---- Ejecutivo ---- */
+function ejecutivo(cur, prev) {
+  const f = sum(cur, m => m.ventas.facturacion), fp = sum(prev, m => m.ventas.facturacion);
+  const g = sum(cur, m => m.finanzas.gastos), gp = sum(prev, m => m.finanzas.gastos);
+  const gan = f - g, ganP = fp - gp;
+  const margen = f ? gan / f * 100 : 0, margenP = fp ? ganP / fp * 100 : 0;
+  const metaMes = D.config.metaTrimestreTotal / 3 * cur.length;
+  const cumpl = metaMes ? f / metaMes * 100 : 0;
+  const canales = {};
+  cur.forEach(m => Object.entries(m.ventas.porCanal).forEach(([c, v]) => canales[c] = (canales[c] || 0) + v));
+  const prodAgg = {};
+  cur.forEach(m => m.ventas.productos.forEach(p => {
+    prodAgg[p.nombre] = prodAgg[p.nombre] || { fact: 0, margen: p.margen };
+    prodAgg[p.nombre].fact += p.facturacion;
+  }));
+  const prodPrev = {};
+  prev.forEach(m => m.ventas.productos.forEach(p => prodPrev[p.nombre] = (prodPrev[p.nombre] || 0) + p.facturacion));
+  const kpis = { facturacion: f, ganancia: gan, margen: +margen.toFixed(1), cumplimiento_meta: +cumpl.toFixed(1) };
+  return `
+  <div class="grid kpis">
+    ${kpi('Facturación', money(f), delta(f, fp))}
+    ${kpi('Ganancia neta', money(gan), delta(gan, ganP))}
+    ${kpi('Margen', pct(margen), margen - margenP, false, 'p.p. vs. anterior')}
+    <div class="kpi"><div class="lbl">Meta del periodo</div><div class="val">${pct(cumpl)}</div>
+      <div class="barra" style="margin-top:8px;"><div style="width:${Math.min(100, cumpl)}%; background:var(--accent2);"></div></div>
+      <div class="dif"><small>${money(f)} / ${money(metaMes)}</small></div></div>
+  </div>
+  <div class="grid cols2">
+    <div class="caja"><h3>Evolución de la facturación</h3>
+      ${lineChart(D.meses.map(m => mesCorto(m.mes)), [{ nombre: 'Facturación', color: C.s1, vals: D.meses.map(m => m.ventas.facturacion) }])}</div>
+    <div class="caja"><h3>Facturación por canal</h3>
+      ${donut(Object.entries(canales).map(([nombre, valor]) => ({ nombre, valor })))}</div>
+  </div>
+  <div class="caja"><h3>Desempeño por producto</h3>
+    <div style="overflow-x:auto;"><table><tr><th>Producto</th><th>Facturación</th><th>Variación</th><th>Margen</th><th>Ganancia</th></tr>
+    ${Object.entries(prodAgg).map(([nombre, p]) => {
+      const d = delta(p.fact, prodPrev[nombre]);
+      return `<tr><td>${esc(nombre)}</td><td>${money(p.fact)}</td>
+        <td class="dif ${d >= 0 ? 'up' : 'down'}">${d == null ? '—' : (d >= 0 ? '↑ ' : '↓ ') + Math.abs(d).toFixed(1) + '%'}</td>
+        <td>${p.margen}%</td><td>${money(p.fact * p.margen / 100)}</td></tr>`;
+    }).join('')}</table></div></div>
+  ${btnInsights('Ejecutivo', kpis, 'ins-eje')}`;
+}
+
+/* ---- Ventas ---- */
+function ventas(cur, prev) {
+  const f = sum(cur, m => m.ventas.facturacion), fp = sum(prev, m => m.ventas.facturacion);
+  const ped = sum(cur, m => m.ventas.pedidos), pedP = sum(prev, m => m.ventas.pedidos);
+  const items = sum(cur, m => m.ventas.items), itemsP = sum(prev, m => m.ventas.items);
+  const aov = ped ? f / ped : 0, aovP = pedP ? fp / pedP : 0;
+  const conv = sum(cur, m => m.ventas.oportunidades) ? sum(cur, m => m.ventas.cerradas) / sum(cur, m => m.ventas.oportunidades) * 100 : 0;
+  const convP = sum(prev, m => m.ventas.oportunidades) ? sum(prev, m => m.ventas.cerradas) / sum(prev, m => m.ventas.oportunidades) * 100 : 0;
+  const rank = {};
+  cur.forEach(m => m.ventas.vendedores.forEach(v => {
+    rank[v.nombre] = rank[v.nombre] || { meta: 0, real: 0 };
+    rank[v.nombre].meta += v.meta; rank[v.nombre].real += v.realizado;
+  }));
+  const filas = Object.entries(rank).map(([n, r]) => ({ n, ...r, p: r.meta ? r.real / r.meta * 100 : 0 })).sort((a, b) => b.real - a.real);
+  const prodAgg = {};
+  cur.forEach(m => m.ventas.productos.forEach(p => {
+    prodAgg[p.nombre] = prodAgg[p.nombre] || { fact: 0, uni: 0 };
+    prodAgg[p.nombre].fact += p.facturacion; prodAgg[p.nombre].uni += p.unidades;
+  }));
+  const leadsCRM = JSON.parse(localStorage.getItem('sinergia_crm_leads') || '[]');
+  const etapas = { nuevo: 0, contactado: 0, calificado: 0, cerrado: 0 };
+  leadsCRM.forEach(l => etapas[l.etapa] = (etapas[l.etapa] || 0) + 1);
+  const kpis = { facturacion: f, pedidos: ped, ticket_medio: +aov.toFixed(0), conversion: +conv.toFixed(1), ranking: filas.map(x => ({ vendedor: x.n, pct_meta: +x.p.toFixed(0) })) };
+  return `
+  <div class="grid kpis">
+    ${kpi('Facturación', money(f), delta(f, fp))}
+    ${kpi('Pedidos', ped.toLocaleString('es'), delta(ped, pedP))}
+    ${kpi('Ticket medio (AOV)', money(aov), delta(aov, aovP))}
+    ${kpi('Ítems vendidos', items.toLocaleString('es'), delta(items, itemsP))}
+    ${kpi('Conversión comercial', pct(conv), conv - convP, false, 'p.p. vs. anterior')}
+  </div>
+  <div class="grid cols2">
+    <div class="caja"><h3>Ranking de vendedores</h3>
+      <div style="overflow-x:auto;"><table><tr><th>#</th><th>Vendedor</th><th>Meta</th><th>Realizado</th><th style="min-width:110px;">% meta</th></tr>
+      ${filas.map((v, i) => {
+        const col = v.p >= 100 ? 'var(--ok)' : v.p >= 85 ? 'var(--warn)' : 'var(--bad)';
+        return `<tr><td>${i + 1}</td><td>${esc(v.n)}</td><td>${money(v.meta)}</td><td>${money(v.real)}</td>
+          <td><div style="display:flex; align-items:center; gap:7px;"><div class="barra" style="flex:1;"><div style="width:${Math.min(100, v.p)}%; background:${col};"></div></div><span style="color:${col};">${v.p.toFixed(0)}%</span></div></td></tr>`;
+      }).join('')}</table></div></div>
+    <div class="caja"><h3>Meta vs. realizado por mes</h3>
+      ${barChart(D.meses.map(m => mesCorto(m.mes)), [
+        { nombre: 'Meta', color: '#4a5065', vals: D.meses.map(m => sum(m.ventas.vendedores, v => v.meta)) },
+        { nombre: 'Realizado', color: C.s1, vals: D.meses.map(m => sum(m.ventas.vendedores, v => v.realizado)) },
+      ])}</div>
+  </div>
+  <div class="grid cols2">
+    <div class="caja"><h3>Ticket medio en el tiempo</h3>
+      ${lineChart(D.meses.map(m => mesCorto(m.mes)), [{ nombre: 'AOV', color: C.s2, vals: D.meses.map(m => m.ventas.pedidos ? Math.round(m.ventas.facturacion / m.ventas.pedidos) : 0) }])}</div>
+    <div class="caja"><h3>Productos campeones</h3>
+      <table><tr><th>Producto</th><th>Ítems</th><th>Facturación</th></tr>
+      ${Object.entries(prodAgg).sort((a, b) => b[1].fact - a[1].fact).map(([n, p]) =>
+        `<tr><td>${esc(n)}</td><td>${p.uni.toLocaleString('es')}</td><td>${money(p.fact)}</td></tr>`).join('')}</table>
+      ${leadsCRM.length ? `<h3 style="margin-top:16px;">Leads del CRM (en vivo)</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${Object.entries(etapas).map(([e, n]) => `<span class="pillmini">${e}: <b>${n}</b></span>`).join('')}
+          <span class="pillmini">conversión: <b>${leadsCRM.length ? (etapas.cerrado / leadsCRM.length * 100).toFixed(0) : 0}%</b></span></div>` : ''}
+    </div>
+  </div>
+  ${btnInsights('Ventas', kpis, 'ins-ven')}`;
+}
+
+/* ---- Financiero ---- */
+function finanzas(cur, prev) {
+  const ing = sum(cur, m => m.finanzas.ingresos), ingP = sum(prev, m => m.finanzas.ingresos);
+  const gas = sum(cur, m => m.finanzas.gastos), gasP = sum(prev, m => m.finanzas.gastos);
+  const gan = ing - gas, ganP = ingP - gasP;
+  const margen = ing ? gan / ing * 100 : 0, margenP = ingP ? ganP / ingP * 100 : 0;
+  const ent = sum(cur, m => m.finanzas.entradas), sal = sum(cur, m => m.finanzas.salidas);
+  const u = cur[cur.length - 1].finanzas;
+  const S = D.config.salud;
+  const gastosMes = avg(cur, m => m.finanzas.gastos);
+  const cobertura = gastosMes ? u.caja / gastosMes : 0;
+  const puntoEq = ing ? Math.min(999, gas / ing * 100) : 0;
+  const inds = [
+    { n: 'Margen neto', v: pct(margen), ok: margen >= S.margen, meta: `> ${S.margen}%` },
+    { n: 'Liquidez corriente', v: u.liquidez.toFixed(2), ok: u.liquidez >= S.liquidez, meta: `> ${S.liquidez}` },
+    { n: 'Endeudamiento', v: pct(u.endeudamiento), ok: u.endeudamiento <= S.endeudamiento, meta: `< ${S.endeudamiento}%` },
+    { n: 'Flujo de caja', v: money(ent - sal), ok: ent - sal > 0, meta: '> 0' },
+    { n: 'Rotación de inventario', v: u.rotInv.toFixed(1), ok: u.rotInv >= S.rotInv, meta: `> ${S.rotInv}` },
+    { n: 'Punto de equilibrio', v: pct(puntoEq) + ' de los ingresos', ok: puntoEq < 100, meta: '< 100%' },
+    { n: 'Cobertura de caja', v: cobertura.toFixed(1) + ' meses', ok: cobertura >= 2, meta: '≥ 2 meses' },
+  ];
+  const alertas = inds.filter(i => !i.ok);
+  const kpis = { ingresos: ing, gastos: gas, ganancia: gan, margen: +margen.toFixed(1), indicadores: inds.map(i => ({ indicador: i.n, valor: i.v, cumple: i.ok })) };
+  return `
+  <div class="grid kpis">
+    ${kpi('Ingresos', money(ing), delta(ing, ingP))}
+    ${kpi('Gastos', money(gas), delta(gas, gasP), true)}
+    ${kpi('Ganancia neta', money(gan), delta(gan, ganP))}
+    ${kpi('Margen neto', pct(margen), margen - margenP, false, 'p.p. vs. anterior')}
+  </div>
+  <div class="grid cols2">
+    <div class="caja"><h3>Ingresos, gastos y ganancia</h3>
+      ${lineChart(D.meses.map(m => mesCorto(m.mes)), [
+        { nombre: 'Ingresos', color: C.s2, vals: D.meses.map(m => m.finanzas.ingresos) },
+        { nombre: 'Gastos', color: C.s5, vals: D.meses.map(m => m.finanzas.gastos) },
+        { nombre: 'Ganancia', color: C.s1, vals: D.meses.map(m => m.finanzas.ingresos - m.finanzas.gastos) },
+      ])}</div>
+    <div class="caja"><h3>Indicadores de salud</h3>
+      ${inds.map(i => `<div style="display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px;">
+        <span><span class="semaforo" style="background:${i.ok ? 'var(--ok)' : 'var(--bad)'};"></span>${i.n}</span>
+        <span style="font-variant-numeric:tabular-nums;">${i.v} <small style="color:var(--muted);">meta ${i.meta}</small></span></div>`).join('')}</div>
+  </div>
+  <div class="grid cols2">
+    <div class="caja"><h3>Flujo de caja mensual (entradas − salidas)</h3>
+      ${barChart(D.meses.map(m => mesCorto(m.mes)), [{ nombre: 'Flujo', color: C.s2, vals: D.meses.map(m => m.finanzas.entradas - m.finanzas.salidas) }])}
+      <div class="leyenda" style="margin-top:6px;"><span>Entradas: <b>${money(ent)}</b></span><span>Salidas: <b>${money(sal)}</b></span><span>Saldo del periodo: <b>${money(ent - sal)}</b></span><span>Caja actual: <b>${money(u.caja)}</b></span></div></div>
+    <div class="caja"><h3>Alertas financieras</h3>
+      ${alertas.length ? alertas.map(a => `<div class="alerta alta">⚠ <div><b>${a.n}</b> está en ${a.v}; la meta es ${a.meta}.</div></div>`).join('') : '<div class="vacio">✔ Todos los indicadores dentro de la meta.</div>'}</div>
+  </div>
+  ${btnInsights('Financiero', kpis, 'ins-fin')}`;
+}
+
+/* ---- Marketing ---- */
+function marketing(cur, prev) {
+  const agg = ms => {
+    const out = {};
+    ms.forEach(m => m.mkt.canales.forEach(c => {
+      out[c.canal] = out[c.canal] || { inversion: 0, impresiones: 0, clics: 0, leads: 0, ventas: 0 };
+      for (const k of ['inversion', 'impresiones', 'clics', 'leads', 'ventas']) out[c.canal][k] += c[k];
+    }));
+    return out;
+  };
+  const A = agg(cur), P = agg(prev);
+  const t = k => sum(Object.values(A), c => c[k]), tp = k => sum(Object.values(P), c => c[k]);
+  const inv = t('inversion'), leads = t('leads'), ventasAtr = t('ventas');
+  const cac = leads ? inv / leads : 0, cacP = tp('leads') ? tp('inversion') / tp('leads') : 0;
+  const roas = inv ? ventasAtr / inv : 0, roasP = tp('inversion') ? tp('ventas') / tp('inversion') : 0;
+  const ctr = t('impresiones') ? t('clics') / t('impresiones') * 100 : 0;
+  const ctrP = tp('impresiones') ? tp('clics') / tp('impresiones') * 100 : 0;
+  const conv = t('clics') ? leads / t('clics') * 100 : 0;
+  const landV = sum(cur, m => m.mkt.landing.visitas), landC = sum(cur, m => m.mkt.landing.conversiones);
+  const landVP = sum(prev, m => m.mkt.landing.visitas), landCP = sum(prev, m => m.mkt.landing.conversiones);
+  const camp = {};
+  cur.forEach(m => m.mkt.campanas.forEach(c => {
+    camp[c.nombre] = camp[c.nombre] || { inversion: 0, ventas: 0 };
+    camp[c.nombre].inversion += c.inversion; camp[c.nombre].ventas += c.ventas;
+  }));
+  const campanas = Object.entries(camp).map(([n, c]) => ({ n, roi: c.inversion ? c.ventas / c.inversion : 0 })).sort((a, b) => b.roi - a.roi).slice(0, 5);
+  const filas = Object.entries(A).map(([canal, c]) => ({ canal, ...c,
+    cac: c.leads ? c.inversion / c.leads : 0, roi: c.inversion ? c.ventas / c.inversion : 0,
+    conv: c.clics ? c.leads / c.clics * 100 : 0 }));
+  const mejor = filas.reduce((a, b) => a.roi > b.roi ? a : b), peor = filas.reduce((a, b) => a.roi < b.roi ? a : b);
+  const embudo = [
+    { nombre: 'Impresiones', valor: t('impresiones') }, { nombre: 'Clics', valor: t('clics') },
+    { nombre: 'Leads', valor: leads }, { nombre: 'Ventas (est.)', valor: Math.round(leads * 0.18) },
+  ];
+  const kpis = { inversion: inv, leads, cac: +cac.toFixed(0), roas: +roas.toFixed(2), ctr: +ctr.toFixed(2),
+    por_canal: filas.map(f => ({ canal: f.canal, roi: +f.roi.toFixed(2), cac: +f.cac.toFixed(0) })) };
+  return `
+  <div class="grid kpis">
+    ${kpi('Inversión total', money(inv), delta(inv, tp('inversion')))}
+    ${kpi('Leads generados', leads.toLocaleString('es'), delta(leads, tp('leads')))}
+    ${kpi('CAC medio', money(cac), delta(cac, cacP), true)}
+    ${kpi('Costo por lead', money(cac), delta(cac, cacP), true)}
+    ${kpi('ROAS', roas.toFixed(1) + 'x', delta(roas, roasP))}
+    ${kpi('CTR promedio', pct(ctr), ctr - ctrP, false, 'p.p. vs. anterior')}
+  </div>
+  <div class="grid cols2">
+    <div class="caja"><h3>Inversión por canal</h3>
+      ${donut(Object.entries(A).map(([nombre, c]) => ({ nombre, valor: c.inversion })))}</div>
+    <div class="caja"><h3>Desempeño por canal</h3>
+      <div style="overflow-x:auto;"><table><tr><th>Canal</th><th>Inversión</th><th>CAC</th><th>ROI</th><th>Conv.</th></tr>
+      ${filas.map(f => `<tr style="${f.canal === mejor.canal ? 'color:var(--ok);' : f.canal === peor.canal ? 'color:var(--bad);' : ''}">
+        <td>${esc(f.canal)} ${f.canal === mejor.canal ? '🏆' : ''}</td><td>${money(f.inversion)}</td><td>${money(f.cac)}</td><td>${f.roi.toFixed(1)}x</td><td>${pct(f.conv)}</td></tr>`).join('')}</table></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+        <span class="pillmini">🏆 Campaña top: <b>${esc(campanas[0]?.n || '—')}</b> (${campanas[0]?.roi.toFixed(1)}x)</span>
+        <span class="pillmini">Conversión de landing: <b>${landV ? (landC / landV * 100).toFixed(1) : 0}%</b>
+          ${landVP ? `<span class="dif ${landC / landV >= landCP / landVP ? 'up' : 'down'}">${landC / landV >= landCP / landVP ? '↑' : '↓'}</span>` : ''}</span></div></div>
+  </div>
+  <div class="grid cols2">
+    <div class="caja"><h3>Embudo de conversión</h3>
+      ${embudo.map((e, i) => {
+        const paso = i ? (e.valor / embudo[i - 1].valor * 100) : null;
+        return `<div class="hbar-row" style="grid-template-columns:110px 1fr 110px;">
+          <span style="color:var(--muted);">${e.nombre}</span>
+          <div class="track"><div class="fill" style="width:${(e.valor / embudo[0].valor * 100).toFixed(2)}%; min-width:3px; background:${SERIE[i]};"></div></div>
+          <span class="v">${e.valor.toLocaleString('es')}${paso != null ? ` <small style="color:var(--muted);">(${paso.toFixed(1)}%)</small>` : ''}</span></div>`;
+      }).join('')}</div>
+    <div class="caja"><h3>ROI por campaña (top 5)</h3>
+      ${hbars(campanas.map(c => ({ nombre: c.n, valor: c.roi })), { fmt: v => v.toFixed(1) + 'x', color: C.s4, max: Math.max(...campanas.map(c => c.roi)) * 1.15 })}</div>
+  </div>
+  ${btnInsights('Marketing', kpis, 'ins-mkt')}`;
+}
+
+/* ---- Operaciones ---- */
+function operaciones(cur, prev) {
+  const u = cur[cur.length - 1].ops;
+  const ord = sum(cur, m => m.ops.ordenes), ordP = sum(prev, m => m.ops.ordenes);
+  const ent = avg(cur, m => m.ops.entregasATiempo), entP = avg(prev, m => m.ops.entregasATiempo);
+  const desp = avg(cur, m => m.ops.despachoHoras), despP = avg(prev, m => m.ops.despachoHoras);
+  const niv = avg(cur, m => m.ops.nivelServicio), nivP = avg(prev, m => m.ops.nivelServicio);
+  const rot = avg(cur, m => m.ops.rotInv), rotP = avg(prev, m => m.ops.rotInv);
+  const qui = sum(cur, m => m.ops.quiebres), quiP = sum(prev, m => m.ops.quiebres);
+  const nivelColor = { alto: 'var(--ok)', medio: 'var(--warn)', bajo: 'var(--bad)' };
+  const bodPrev = {};
+  prev.forEach(m => m.ops.bodegas.forEach(b => bodPrev[b.nombre] = b.cumplimiento));
+  const bajos = u.inventario.filter(i => i.nivel === 'bajo');
+  const alertas = [
+    ...(bajos.length ? [{ s: 'alta', t: `${bajos.length} producto(s) con stock bajo: ${bajos.map(b => b.producto).join(', ')}.` }] : []),
+    ...(desp < despP ? [{ s: 'baja', t: `El tiempo de despacho mejoró ${(despP - desp).toFixed(1)} h vs. el periodo anterior.` }] : []),
+    ...u.bodegas.filter(b => b.cumplimiento < 90).map(b => ({ s: 'media', t: `${b.nombre} está en ${b.cumplimiento}% de cumplimiento; requiere revisión.` })),
+  ];
+  const kpis = { ordenes: ord, entregas_a_tiempo: +ent.toFixed(1), despacho_horas: +desp.toFixed(1), nivel_servicio: +niv.toFixed(1), quiebres: qui, stock_bajo: bajos.map(b => b.producto) };
+  return `
+  <div class="grid kpis">
+    ${kpi('Órdenes procesadas', ord.toLocaleString('es'), delta(ord, ordP))}
+    ${kpi('Entregas a tiempo', pct(ent), ent - entP, false, 'p.p. vs. anterior')}
+    ${kpi('Tiempo de despacho', desp.toFixed(1) + ' h', delta(desp, despP), true)}
+    ${kpi('Nivel de servicio', pct(niv), niv - nivP, false, 'p.p. vs. anterior')}
+    ${kpi('Rotación de inventario', rot.toFixed(1), delta(rot, rotP))}
+    ${kpi('Quiebres de stock', String(qui), delta(qui, quiP), true)}
+  </div>
+  <div class="grid cols2">
+    <div class="caja"><h3>Órdenes procesadas — tendencia semanal (últ. mes)</h3>
+      ${lineChart(['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'], [{ nombre: 'Órdenes', color: C.s1, vals: u.semana }], { fmt: v => v.toLocaleString('es') })}</div>
+    <div class="caja"><h3>Cumplimiento por área</h3>
+      ${hbars(u.areas.map(a => ({ nombre: a.area, valor: a.cumplimiento })))}</div>
+  </div>
+  <div class="grid cols2">
+    <div class="caja"><h3>Estado de inventario clave</h3>
+      ${u.inventario.map(i => `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;">
+        <span><span class="semaforo" style="background:${nivelColor[i.nivel]};"></span>${esc(i.producto)}</span>
+        <span style="color:var(--muted);">stock ${i.nivel}</span></div>`).join('')}
+      <h3 style="margin-top:16px;">Cumplimiento por bodega</h3>
+      <table><tr><th>Bodega</th><th>Cumplimiento</th><th>vs. anterior</th></tr>
+      ${u.bodegas.map(b => {
+        const d = bodPrev[b.nombre] != null ? b.cumplimiento - bodPrev[b.nombre] : null;
+        return `<tr><td>${esc(b.nombre)}</td><td>${b.cumplimiento}%</td>
+          <td class="dif ${d >= 0 ? 'up' : 'down'}">${d == null ? '—' : (d >= 0 ? '↑ ' : '↓ ') + Math.abs(d) + ' p.p.'}</td></tr>`;
+      }).join('')}</table></div>
+    <div class="caja"><h3>Alertas operacionales</h3>
+      ${alertas.length ? alertas.map(a => `<div class="alerta ${a.s}">${a.s === 'alta' ? '⚠' : a.s === 'media' ? 'ℹ' : '✔'} <div>${esc(a.t)}</div></div>`).join('') : '<div class="vacio">Sin alertas.</div>'}</div>
+  </div>
+  ${btnInsights('Operaciones', kpis, 'ins-ops')}`;
+}
+
+/* ---- RRHH ---- */
+function rrhh(cur, prev) {
+  const activosEn = mes => D.colaboradores.filter(c => c.ingreso <= mes + '-31' && (!c.baja || c.baja > mes + '-31')).length;
+  const bajasEn = ms => D.colaboradores.filter(c => c.baja && ms.some(m => c.baja.slice(0, 7) === m.mes)).length;
+  const emp = activosEn(cur[cur.length - 1].mes);
+  const empIni = activosEn(cur[0].mes);
+  const bajas = bajasEn(cur), bajasP = bajasEn(prev);
+  const rotacion = empIni ? bajas / empIni * 100 : 0;
+  const rotacionP = activosEn(prev[0]?.mes || cur[0].mes) ? bajasP / activosEn(prev[0]?.mes || cur[0].mes) * 100 : 0;
+  const costo = avg(cur, m => m.rrhh.costoContratacion), costoP = avg(prev, m => m.rrhh.costoContratacion);
+  const aus = avg(cur, m => avg(m.rrhh.ausentismo, a => a.pct)), ausP = avg(prev, m => avg(m.rrhh.ausentismo, a => a.pct));
+  const ausArea = {};
+  cur.forEach(m => m.rrhh.ausentismo.forEach(a => { ausArea[a.area] = ausArea[a.area] || []; ausArea[a.area].push(a.pct); }));
+  const headcount = {};
+  D.colaboradores.filter(c => !c.baja).forEach(c => headcount[c.area] = (headcount[c.area] || 0) + 1);
+  const kpis = { rotacion: +rotacion.toFixed(1), empleados: emp, costo_contratacion: +costo.toFixed(0), ausentismo: +aus.toFixed(1) };
+  return `
+  <div class="grid kpis">
+    ${kpi('Rotación (periodo)', pct(rotacion), rotacion - rotacionP, true, 'p.p. vs. anterior')}
+    ${kpi('Empleados activos', String(emp), delta(emp, activosEn(prev[prev.length - 1]?.mes || cur[0].mes)))}
+    ${kpi('Costo por contratación', money(costo), delta(costo, costoP), true)}
+    ${kpi('Ausentismo promedio', pct(aus), aus - ausP, true, 'p.p. vs. anterior')}
+  </div>
+  <div class="grid cols2">
+    <div class="caja"><h3>Empleados activos por mes</h3>
+      ${barChart(D.meses.map(m => mesCorto(m.mes)), [{ nombre: 'Empleados', color: C.s1, vals: D.meses.map(m => activosEn(m.mes)) }], { fmt: v => v + ' personas' })}</div>
+    <div class="caja"><h3>Ausentismo por área</h3>
+      ${hbars(Object.entries(ausArea).map(([a, v]) => ({ nombre: a, valor: +(v.reduce((x, y) => x + y, 0) / v.length).toFixed(1) })), { max: 8 })}
+      <h3 style="margin-top:14px;">Headcount por área</h3>
+      ${hbars(Object.entries(headcount).map(([a, n]) => ({ nombre: a, valor: n, color: C.s4 })), { fmt: v => String(v), max: Math.max(...Object.values(headcount)) * 1.2 })}</div>
+  </div>
+  <div class="caja"><h3>Colaboradores</h3>
+    <div style="overflow-x:auto;"><table><tr><th>Nombre</th><th>Área</th><th>Ingreso</th><th>Estado</th><th>Desempeño</th><th></th></tr>
+    ${D.colaboradores.map((c, i) => `<tr>
+      <td>${esc(c.nombre)}</td><td>${esc(c.area)}</td><td>${c.ingreso}</td>
+      <td>${c.baja ? `<span style="color:var(--bad);">baja ${c.baja}</span>` : '<span style="color:var(--ok);">activo</span>'}</td>
+      <td>${'★'.repeat(c.desempeno)}${'☆'.repeat(5 - c.desempeno)}</td>
+      <td>${c.baja ? '' : `<button class="btn" onclick="darBaja(${i})">Dar de baja</button>`}</td></tr>`).join('')}</table></div>
+    <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+      <input id="nc_nombre" placeholder="Nombre"><input id="nc_area" placeholder="Área" style="width:120px;">
+      <button class="btn" onclick="altaColab()">+ Alta</button></div></div>
+  ${btnInsights('RRHH', kpis, 'ins-rh')}`;
+}
+function darBaja(i) {
+  D.colaboradores[i].baja = D.meses[D.meses.length - 1].mes + '-15';
+  guardar(); render();
+}
+function altaColab() {
+  const n = document.getElementById('nc_nombre').value.trim();
+  if (!n) return;
+  D.colaboradores.push({ nombre: n, area: document.getElementById('nc_area').value.trim() || 'General', ingreso: D.meses[D.meses.length - 1].mes + '-01', baja: '', desempeno: 3 });
+  guardar(); render();
+}
+
+/* ---- Objetivos ---- */
+function objetivos(cur) {
+  const trim = D.meses.slice(-3);
+  const fact = sum(trim, m => m.ventas.facturacion);
+  const meta = D.config.metaTrimestreTotal;
+  const p = meta ? fact / meta * 100 : 0;
+  const ritmo = fact / trim.length;
+  const proyeccion = ritmo * 3;
+  const M = D.config.metasArea;
+  const gan = sum(trim, m => m.finanzas.ingresos - m.finanzas.gastos);
+  const leadsT = sum(trim, m => sum(m.mkt.canales, c => c.leads));
+  const nivT = avg(trim, m => m.ops.nivelServicio);
+  const rotT = 8;
+  const areas = [
+    { a: 'Ventas', real: fact, meta: M.Ventas, fmt: money },
+    { a: 'Financiero', real: gan, meta: M.Financiero, fmt: money },
+    { a: 'Marketing', real: leadsT, meta: M.Marketing, fmt: v => v.toLocaleString('es') + ' leads' },
+    { a: 'Operaciones', real: nivT, meta: M.Operaciones, fmt: v => v.toFixed(1) + '%' },
+    { a: 'RRHH', real: M.RRHH - rotT + M.RRHH, meta: M.RRHH * 2, fmt: v => '' },
+    { a: 'Producto', real: sum(trim, m => m.ventas.productos[0].facturacion), meta: M.Producto, fmt: money },
+    { a: 'Soporte', real: 87, meta: M.Soporte, fmt: v => v + '%' },
+  ].map(x => ({ ...x, p: x.meta ? x.real / x.meta * 100 : 0 }));
+  const kpis = { progreso: +p.toFixed(1), proyeccion: Math.round(proyeccion), meta, por_area: areas.map(a => ({ area: a.a, cumplimiento: +a.p.toFixed(0) })) };
+  return `
+  <div class="grid cols2">
+    <div class="caja" style="text-align:center;"><h3>Progreso general del trimestre</h3>
+      <svg viewBox="0 0 160 160" width="160">
+        <circle cx="80" cy="80" r="64" fill="none" stroke="var(--panel2)" stroke-width="14"/>
+        <circle cx="80" cy="80" r="64" fill="none" stroke="${p >= 90 ? 'var(--ok)' : p >= 60 ? 'var(--warn)' : 'var(--bad)'}" stroke-width="14" stroke-linecap="round"
+          stroke-dasharray="${(Math.min(100, p) / 100 * 2 * Math.PI * 64).toFixed(1)} ${(2 * Math.PI * 64).toFixed(1)}" transform="rotate(-90 80 80)"/>
+        <text x="80" y="82" text-anchor="middle" font-size="26" font-weight="700" fill="var(--text)">${p.toFixed(0)}%</text>
+        <text x="80" y="102" text-anchor="middle" font-size="11" fill="var(--muted)">${money(fact)} / ${money(meta)}</text></svg></div>
+    <div class="caja"><h3>Proyección del trimestre</h3>
+      <div class="grid kpis" style="grid-template-columns:1fr 1fr;">
+        <div class="kpi"><div class="lbl">Proyección de cierre</div><div class="val">${money(proyeccion)}</div>
+          <div class="dif ${proyeccion >= meta ? 'up' : 'down'}">${proyeccion >= meta ? '↑ por encima de la meta' : '↓ por debajo de la meta'} (${pct(meta ? proyeccion / meta * 100 : 0)})</div></div>
+        <div class="kpi"><div class="lbl">Faltan</div><div class="val">${money(Math.max(0, meta - fact))}</div>
+          <div class="dif"><small>${pct(Math.max(0, 100 - p))} para la meta</small></div></div>
+      </div>
+      <div class="sub" style="font-size:12px; color:var(--muted); margin-top:6px;">Calculada extrapolando el ritmo actual (${money(ritmo)}/mes) a los 3 meses del trimestre.</div></div>
+  </div>
+  <div class="caja"><h3>Cumplimiento por área (trimestre)</h3>
+    <div class="rings">${areas.map(a => ring(a.p, a.fmt(a.real) ? a.fmt(a.real) + ' / ' + a.fmt(a.meta) : '', a.a)).join('')}</div></div>
+  <div class="caja"><h3>Progreso consolidado</h3>
+    <div style="overflow-x:auto;"><table><tr><th>Área</th><th style="min-width:140px;">Cumplimiento</th><th>Realizado</th><th>Meta</th><th>Estado</th></tr>
+    ${areas.map(a => {
+      const col = a.p >= 90 ? 'var(--ok)' : a.p >= 60 ? 'var(--warn)' : 'var(--bad)';
+      const estado = a.p >= 100 ? 'Por encima de la meta' : a.p >= 90 ? 'En meta' : a.p >= 60 ? 'En riesgo' : 'Atrasado';
+      return `<tr><td>${a.a}</td>
+        <td><div style="display:flex; align-items:center; gap:7px;"><div class="barra" style="flex:1;"><div style="width:${Math.min(100, a.p)}%; background:${col};"></div></div>${a.p.toFixed(0)}%</div></td>
+        <td>${a.fmt(a.real) || '—'}</td><td>${a.fmt(a.meta) || '—'}</td><td style="color:${col};">${estado}</td></tr>`;
+    }).join('')}</table></div></div>
+  ${btnInsights('Objetivos', kpis, 'ins-obj')}`;
+}
+
+/* ---- Configuración ---- */
+function config() {
+  const c = D.config;
+  return `
+  <div class="caja"><h3>Negocio</h3>
+    <div class="fila-conf"><label>Nombre del negocio</label><input id="cf_negocio" value="${esc(c.negocio)}"></div>
+    <div class="fila-conf"><label>Moneda</label>
+      <select id="cf_moneda">${['USD','MXN','COP','ARS','EUR'].map(m => `<option ${c.moneda === m ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+    <div class="fila-conf"><label>Meta del trimestre (total)</label><input id="cf_meta" type="number" value="${c.metaTrimestreTotal}"></div></div>
+  <div class="caja"><h3>Metas por área (trimestre)</h3>
+    ${Object.entries(c.metasArea).map(([a, v]) => `<div class="fila-conf"><label>${a}</label><input data-area="${a}" class="cf_area" type="number" value="${v}"></div>`).join('')}</div>
+  <div class="caja"><h3>Metas de salud financiera</h3>
+    <div class="fila-conf"><label>Margen neto mínimo %</label><input id="cf_margen" type="number" value="${c.salud.margen}"></div>
+    <div class="fila-conf"><label>Liquidez corriente mínima</label><input id="cf_liquidez" type="number" step="0.1" value="${c.salud.liquidez}"></div>
+    <div class="fila-conf"><label>Endeudamiento máximo %</label><input id="cf_deuda" type="number" value="${c.salud.endeudamiento}"></div>
+    <div class="fila-conf"><label>Rotación de inventario mínima</label><input id="cf_rot" type="number" step="0.1" value="${c.salud.rotInv}"></div></div>
+  <div class="caja">
+    <button class="btn primario" onclick="guardarConfig()">Guardar configuración</button>
+    <button class="btn" onclick="exportarJSON()">⬇ Respaldo JSON (todos los datos)</button>
+    <label class="btn" style="display:inline-block; cursor:pointer;">⬆ Restaurar JSON<input type="file" accept=".json" style="display:none;" onchange="importarJSON(this.files[0])"></label>
+    <button class="btn" style="border-color:var(--bad); color:var(--bad);" onclick="borrarTodo()">Borrar todos los datos</button></div>`;
+}
+function guardarConfig() {
+  const c = D.config;
+  c.negocio = document.getElementById('cf_negocio').value.trim() || c.negocio;
+  c.moneda = document.getElementById('cf_moneda').value;
+  c.metaTrimestreTotal = +document.getElementById('cf_meta').value || c.metaTrimestreTotal;
+  document.querySelectorAll('.cf_area').forEach(i => c.metasArea[i.dataset.area] = +i.value || 0);
+  c.salud = { margen: +document.getElementById('cf_margen').value, liquidez: +document.getElementById('cf_liquidez').value,
+              endeudamiento: +document.getElementById('cf_deuda').value, rotInv: +document.getElementById('cf_rot').value };
+  guardar(); render();
+}
+function exportarJSON() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(D, null, 2)], { type: 'application/json' }));
+  a.download = 'sinergia-panel-respaldo.json'; a.click();
+}
+function importarJSON(f) {
+  if (!f) return;
+  const fr = new FileReader();
+  fr.onload = () => { try { D = JSON.parse(fr.result); guardar(); render(); } catch { alert('JSON inválido'); } };
+  fr.readAsText(f);
+}
+function borrarTodo() {
+  if (!confirm('¿Borrar todos los datos del panel?')) return;
+  D = null; localStorage.removeItem(CLAVE); render();
+}
+
+/* ---- CSV ---- */
+function exportarCSV() {
+  if (!D) return;
+  const { cur } = rangos();
+  let filas = [['mes','facturacion','pedidos','ingresos','gastos','ganancia','inversion_mkt','leads','ordenes','empleados_bajas']];
+  cur.forEach(m => filas.push([m.mes, m.ventas.facturacion, m.ventas.pedidos, m.finanzas.ingresos, m.finanzas.gastos,
+    m.finanzas.ingresos - m.finanzas.gastos, sum(m.mkt.canales, c => c.inversion), sum(m.mkt.canales, c => c.leads), m.ops.ordenes, '']));
+  const csv = filas.map(f => f.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `sinergia-panel-${vista}.csv`; a.click();
+}
+
+render();
+</script>
+</body>
+</html>
