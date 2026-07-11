@@ -1,43 +1,54 @@
-# Prompt: Suite de dashboards de negocio "Sinergia Panel"
+# Prompt genérico: Suite de dashboards de negocio
 
-Prompt detallado para construir la suite de dashboards inspirada en las 7 secciones
-(Ejecutivo, Ventas, Financiero, Marketing, Operaciones, Equipo/RRHH, Objetivos).
-Copiar y pegar completo en Claude Code / Fable.
+Prompt para construir una suite de dashboards de 7 secciones (Ejecutivo, Ventas,
+Financiero, Marketing, Operaciones, Equipo/RRHH, Objetivos) en CUALQUIER repo.
+Copiar y pegar completo en Claude Code / Fable dentro del proyecto donde se
+quiera el dashboard.
 
 ---
 
-Construye "Sinergia Panel", una suite de dashboards de negocio, como una nueva
-sección `panel/` de este repo (mismo patrón que `crm/` y `voz/`: HTML/CSS/JS
-vanilla en un solo archivo por página, sin frameworks, desplegable en Vercel
-como sitio estático + funciones serverless en `api/`).
+Construye una suite de dashboards de negocio como una nueva sección de ESTE
+repositorio. Antes de escribir una sola línea de código, haz el Paso 0.
 
-## Contexto y restricciones técnicas
+## Paso 0 — Descubre el proyecto y adáptate a él
 
-- Stack: HTML/CSS/JS vanilla, estilo visual idéntico al de `crm/index.html`
-  (tema oscuro, variables CSS --bg #0f1117, --panel #181b23, acento naranja
-  #c2571b, misma tipografía system-ui y mismo lenguaje de componentes).
-- Datos: todo persiste en localStorage (sin base de datos). Debe haber
-  importación de datos por CSV y captura manual con formularios, más
-  exportación de cada sección a CSV. Incluye un botón "Cargar datos de
-  ejemplo" que llena todo con datos demo realistas para ver los dashboards
-  vivos de inmediato.
-- Integración con lo existente: la sección Ventas y Marketing deben poder leer
-  los leads del CRM ya construido (localStorage key `sinergia_crm_leads`,
-  objetos con {nombre, etapa, score, urgencia, interes, seguimiento}).
-- IA: crea un endpoint `api/panel.js` (SDK `@google/genai`, modelo
-  `gemini-2.0-flash`, misma estructura CORS y manejo de errores que
-  `api/crm.js`) con una acción `insights`: recibe los KPIs agregados de una
-  sección y devuelve JSON con 3 insights de acción concretos y alertas.
-  Cada dashboard tiene un botón "✨ Insights IA".
-- Gráficas: dibújalas con SVG/canvas propio o una librería embebida en el
-  archivo (sin CDNs externos). Líneas, barras, donas y anillos de progreso.
-- Todo en español. Moneda configurable (por defecto USD). Selector de periodo
-  global (mes actual, trimestre, año, rango personalizado) y comparación
-  "vs. periodo anterior" en todos los KPIs, con flecha ↑/↓ y variación en %
-  (verde si mejora, rojo si empeora; ojo: en gastos/rotación/CAC "bajar" es
+Explora el repo actual y decide con base en lo que encuentres:
+
+- **Stack:** detecta lenguaje, framework y forma de despliegue (Next/React/Vue,
+  HTML estático, funciones serverless, backend propio, etc.) y construye el
+  dashboard siguiendo las convenciones del proyecto, no las tuyas. Si el repo
+  está vacío o es estático simple, usa el fallback: HTML/CSS/JS vanilla en una
+  carpeta `panel/`, sin frameworks ni CDNs externos.
+- **Estilo visual:** si el proyecto ya tiene páginas, design system o variables
+  CSS, reutilízalos para que el dashboard se vea parte del mismo producto. Si
+  no hay nada, usa un tema oscuro sobrio con un solo color de acento.
+- **Datos reales primero:** busca qué información ya existe y conéctala a las
+  secciones que corresponda — base de datos, APIs propias, archivos
+  JSON/CSV, localStorage de otras vistas, modelos o esquemas existentes.
+  Cada dato real que encuentres reemplaza a su equivalente manual. Lo que no
+  exista se captura con formularios e importación CSV, y persiste donde el
+  proyecto ya persista datos (su BD si tiene; si no, localStorage).
+- **IA (opcional pero deseable):** si el proyecto ya tiene integrado un
+  proveedor de IA (revisa dependencias y variables de entorno), crea un
+  endpoint de "insights" reutilizando ese mismo proveedor, clave y patrones de
+  código. Si no hay ninguno, omite los bloques de IA sin romper el resto.
+- **Idioma y moneda:** usa el idioma predominante del proyecto (si no es
+  claro, español). Moneda configurable.
+
+Reglas transversales para TODAS las secciones:
+
+- Selector de periodo global (mes, trimestre, año, rango personalizado) y
+  comparación "vs. periodo anterior" en todos los KPIs, con flecha ↑/↓ y
+  variación % (verde si mejora, rojo si empeora; cuidado: en gastos, CAC,
+  rotación de personal, tiempo de despacho y quiebres de stock, BAJAR es
   mejorar).
-- Navegación: sidebar fija con las 7 secciones + Configuración. En móvil,
-  colapsa a menú. Cada sección es una vista de la misma SPA.
+- Gráficas sin dependencias externas nuevas salvo que el proyecto ya use una
+  librería de charts — en ese caso, úsala.
+- Navegación: sidebar con las 7 secciones + Configuración; colapsable en móvil.
+- Botón "Cargar datos de ejemplo" que puebla todo con datos demo realistas y
+  coherentes entre secciones, para ver los dashboards vivos de inmediato.
+- Exportación de cada sección a CSV y respaldo/restauración de todos los
+  datos en un JSON.
 
 ## Sección 1 — Dashboard Ejecutivo
 
@@ -46,10 +57,9 @@ como sitio estático + funciones serverless en `api/`).
 - 4 KPIs grandes: Facturación, Ganancia neta, Margen %, y Meta mensual
   (con barra de progreso: realizado / meta y % de cumplimiento).
 - Gráfica de línea: evolución de la facturación por mes (últimos 6-12 meses).
-- Dona: facturación por canal (los canales los define el usuario en
-  Configuración, ej. Sitio, Marketplace, Representantes, Otros).
-- Tabla: desempeño por línea de producto/servicio — columnas Producto,
-  Facturación, Variación %, Margen %, Ganancia; variaciones coloreadas.
+- Dona: facturación por canal (canales configurables).
+- Tabla: desempeño por línea de producto/servicio — Producto, Facturación,
+  Variación %, Margen %, Ganancia; variaciones coloreadas.
 - Bloque "3 insights de acción" generado por la IA a partir de los datos
   (ej. "facturación arriba del plan por 2º mes: mantener foco en las
   campañas que más convierten").
@@ -58,16 +68,17 @@ como sitio estático + funciones serverless en `api/`).
 
 "Para exigirle más a tu equipo pero con datos."
 
-- 5 KPIs: Facturación del periodo, Pedidos, Ticket medio (AOV), Ítems vendidos,
-  y Conversión comercial % (ventas cerradas / oportunidades).
+- 5 KPIs: Facturación del periodo, Pedidos, Ticket medio (AOV), Ítems
+  vendidos, y Conversión comercial % (ventas cerradas / oportunidades).
 - Ranking de vendedores: tabla con #, Vendedor, Meta, Realizado, % de meta
   con barra de progreso — verde ≥100%, ámbar 85-99%, rojo <85%. Ordenada de
   mayor a menor para que el equipo compita por el primer puesto.
 - Gráfica de barras: Meta vs. Realizado por mes.
 - Gráfica de línea: ticket medio a lo largo del tiempo.
 - Tabla "Productos campeones": producto, ítems vendidos, facturación.
-- Extra CRM: tarjeta con leads activos por etapa y tasa de conversión
-  (leads cerrados / leads totales) leyendo `sinergia_crm_leads`.
+- Si el repo tiene datos de leads/clientes (CRM, tabla de contactos, etc.),
+  agrega una tarjeta con leads activos por etapa y tasa de conversión
+  calculada desde esos datos reales.
 
 ## Sección 3 — Financiero
 
@@ -94,8 +105,8 @@ como sitio estático + funciones serverless en `api/`).
 
 - 6 KPIs: Inversión total, Leads generados, CAC medio, Costo por lead,
   ROAS/ROI medio (x), CTR promedio % y Conversión media %.
-- Dona: inversión por canal (Google Ads, Meta Ads, Instagram Ads, LinkedIn,
-  YouTube, Otros — editables).
+- Dona: inversión por canal (Google Ads, Meta Ads, Email, Orgánico, Otros —
+  editables).
 - Tabla "Desempeño por canal": canal, inversión, CAC, ROI, conversión %;
   resalta el mejor y peor canal.
 - Embudo de conversión general: impresiones → clics → leads → ventas, con
@@ -115,11 +126,10 @@ normalmente se pierde en la operación."
 
 - 6 KPIs: Órdenes procesadas, Entregas a tiempo %, Tiempo promedio de
   despacho (horas), Nivel de servicio %, Rotación de inventario, Quiebres
-  de stock — cada uno con variación vs. periodo anterior (ojo: tiempo de
-  despacho y quiebres mejoran al BAJAR).
+  de stock.
 - Gráfica de línea: órdenes procesadas, tendencia semanal (Lun-Dom).
 - Barras horizontales: cumplimiento por área (Logística, Almacén, Despacho,
-  Compras, Transporte) en %.
+  Compras, Transporte — editables) en %.
 - Panel "Estado de inventario clave": lista de productos con semáforo
   🟢 stock alto / 🟡 stock medio / 🔴 stock bajo.
 - Tabla "Cumplimiento por bodega/sucursal": bodega, cumplimiento %,
@@ -133,7 +143,7 @@ normalmente se pierde en la operación."
 
 - 4 KPIs: Rotación % (YTD), Cantidad de empleados, Costo por contratación,
   Ausentismo promedio % — todos con variación vs. mismo periodo del año
-  anterior (recuerda: rotación/costo/ausentismo mejoran al BAJAR).
+  anterior.
 - Gráfica de línea: rotación % por mes.
 - Gráfica de barras: cantidad de empleados por mes.
 - Barras horizontales: ausentismo por área y headcount por área.
@@ -152,25 +162,25 @@ normalmente se pierde en la operación."
   tendencia); KPI "Faltan": monto restante y % para la meta.
 - Anillos de cumplimiento por área: Ventas, Financiero, Marketing,
   Operaciones, RRHH, Producto, Soporte — cada uno con % y realizado/meta,
-  coloreado verde
-  ≥90%, ámbar 60-89%, rojo <60%.
+  coloreado verde ≥90%, ámbar 60-89%, rojo <60%.
 - Tabla "Progreso consolidado": área, barra de cumplimiento, realizado,
   meta, estado ("por encima de la meta" / "en riesgo" / "atrasado").
-- Las metas se definen por trimestre en Configuración; las áreas de Ventas,
-  Financiero y Marketing pueden autocompletar su "realizado" desde los datos
-  de sus propias secciones.
+- Las metas se definen por trimestre en Configuración; las áreas cuyos datos
+  ya viven en otras secciones (Ventas, Financiero, Marketing, Operaciones)
+  autocompletan su "realizado" desde esos datos.
 
 ## Configuración
 
 - Nombre del negocio, moneda, canales de venta, canales de marketing, áreas,
-  vendedores, metas por trimestre y por área, metas de los indicadores de
-  salud financiera.
+  bodegas, vendedores, metas por trimestre y por área, metas de los
+  indicadores de salud financiera.
 - Exportar/importar TODOS los datos como un solo JSON (respaldo manual).
 
 ## Criterios de aceptación
 
 - Con "Cargar datos de ejemplo", las 7 secciones se ven pobladas y coherentes
   entre sí (los totales de Ventas cuadran con el Ejecutivo, etc.).
-- Sin errores en consola; funciona en móvil; ningún recurso externo (CDNs).
-- Verifica el flujo completo en navegador antes de dar por terminado, y
-  navega las 7 secciones con datos demo.
+- Si el repo tenía datos reales, al menos una sección los muestra de verdad.
+- Sin errores en consola; funciona en móvil; sin dependencias externas nuevas.
+- Verifica el flujo completo en navegador antes de dar por terminado, navegando
+  las 7 secciones con datos demo, y muestra evidencia (captura de pantalla).
