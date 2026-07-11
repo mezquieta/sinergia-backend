@@ -122,7 +122,8 @@
 </div>
 
 <script>
-const API_URL = '/api/crm';
+const API_BASE = location.hostname.endsWith('github.io') ? 'https://project-5y7mn.vercel.app' : '';
+const API_URL = API_BASE + '/api/crm';
 const ETAPAS = [
   { id: 'nuevo', titulo: 'Nuevo' },
   { id: 'contactado', titulo: 'Contactado' },

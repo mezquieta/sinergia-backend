@@ -73,7 +73,7 @@ async function buscar() {
   out.innerHTML = '<div class="caja"><div class="estado">🛰 Rastreando la web…</div></div>';
   btn.disabled = true;
   try {
-    const res = await fetch('/api/radar', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    const res = await fetch((location.hostname.endsWith('github.io') ? 'https://project-5y7mn.vercel.app' : '') + '/api/radar', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'buscar', categoria }) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error del servidor');
