@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sinergia Contenido</title>
+<style>
+  :root {
+    --bg: #0f1117; --panel: #181b23; --panel2: #1f2330; --border: #2a2f3e;
+    --text: #e8eaf0; --muted: #8a90a3; --accent: #c2571b; --accent2: #e07b3a;
+    --ok: #0ca30c; --bad: #d03b3b;
+    --ig: #d55181; --tt: #199e70; --yt: #e66767; --azul: #3987e5;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; min-height: 100vh; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  header h1 { font-size: 18px; }
+  header h1 span { color: var(--accent2); }
+  nav { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab { background: var(--panel2); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 8px 13px; font-size: 13px; cursor: pointer; font-weight: 600; font-family: inherit; }
+  .tab.activo { background: var(--accent); border-color: var(--accent); color: #fff; }
+  main { max-width: 1100px; margin: 0 auto; padding: 18px 16px 70px; }
+  .btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 9px 14px; font-size: 13px; cursor: pointer; font-weight: 600; font-family: inherit; }
+  .btn:hover { background: var(--accent2); }
+  .btn.sec { background: var(--panel2); border: 1px solid var(--border); color: var(--text); }
+  .btn.mini { padding: 4px 9px; font-size: 12px; }
+  input, select, textarea { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 9px 11px; font-size: 14px; font-family: inherit; }
+  .caja { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  .caja h3 { font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 12px; }
+  .grid { display: grid; gap: 12px; }
+  .cols2 { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 900px) { .cols2 { grid-template-columns: 1fr; } }
+  .kpis { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 14px; }
+  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+  .kpi .lbl { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .kpi .val { font-size: 25px; font-weight: 700; color: var(--accent2); }
+  .kpi .dif { font-size: 12px; margin-top: 6px; color: var(--muted); }
+  .kpi .dif.up { color: var(--ok); } .kpi .dif.down { color: var(--bad); }
+  .vacio { color: var(--muted); font-size: 13px; text-align: center; padding: 22px 0; }
+  .red-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+  .postcard { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; margin-bottom: 8px; display: flex; justify-content: space-between; gap: 10px; align-items: center; font-size: 13px; cursor: pointer; }
+  .postcard:hover { border-color: var(--accent); }
+  .estado { padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .estado.borrador { background: #3a3320; color: #e5b567; }
+  .estado.listo { background: #1e3230; color: #4ec9a5; }
+  .estado.publicado { background: #20304a; color: #7fb3f2; }
+  /* calendario */
+  .cal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .cal-head h2 { font-size: 16px; text-transform: capitalize; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal-dow { text-align: center; font-size: 11px; color: var(--muted); padding: 4px 0; text-transform: uppercase; }
+  .dia { background: #12141b; border: 1px solid var(--border); border-radius: 9px; min-height: 84px; padding: 6px; cursor: pointer; font-size: 11px; position: relative; }
+  .dia:hover { border-color: var(--accent2); }
+  .dia .num { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+  .dia.con-posts { background: var(--panel2); }
+  .dia.completo { border-color: var(--accent2); }
+  .dia.hoy { outline: 2px solid var(--accent2); outline-offset: -2px; }
+  .dia.hoy .num { color: var(--accent2); font-weight: 700; }
+  .dia.otro-mes { opacity: 0.3; }
+  .mini-post { border-radius: 5px; padding: 2px 5px; margin-bottom: 3px; background: var(--bg); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  /* panel lateral */
+  #lateral { position: fixed; top: 0; right: -420px; width: min(400px, 100vw); height: 100%; background: var(--panel); border-left: 1px solid var(--border); z-index: 30; transition: right .22s; padding: 18px; overflow-y: auto; }
+  #lateral.abierto { right: 0; }
+  #lateral h2 { font-size: 16px; margin-bottom: 14px; }
+  .campo { margin-bottom: 11px; }
+  .campo label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  .campo input, .campo select, .campo textarea { width: 100%; }
+  /* ideas */
+  .idea { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 9px; display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+  /* guiones / carruseles */
+  .bloque { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 13px; margin-bottom: 10px; font-size: 14px; line-height: 1.6; }
+  .bloque .tag { font-size: 11px; color: var(--accent2); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .slides { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; }
+  .slide { flex: 0 0 200px; border-radius: 12px; padding: 14px; min-height: 200px; display: flex; flex-direction: column; gap: 8px; }
+  .slide.est-oscuro { background: #12141b; border: 1px solid var(--border); }
+  .slide.est-naranja { background: linear-gradient(160deg, #c2571b, #8a3a0f); }
+  .slide.est-claro { background: #ece9e2; color: #1b1b1b; }
+  .slide textarea { width: 100%; background: transparent; border: 1px dashed rgba(128,128,128,.4); font-size: 12px; color: inherit; resize: vertical; }
+  .slide .n { font-size: 10px; opacity: .6; }
+  .slide .st { font-weight: 700; font-size: 14px; border: none; background: transparent; color: inherit; width: 100%; }
+  .lib-item { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; margin-bottom: 8px; font-size: 13px; display: flex; justify-content: space-between; gap: 8px; align-items: center; cursor: pointer; }
+  .lib-item:hover { border-color: var(--accent); }
+  .cargando { color: var(--muted); font-size: 13px; padding: 8px 0; }
+  .error-msg { color: var(--bad); font-size: 13px; padding: 6px 0; }
+  svg text { font-family: system-ui, sans-serif; }
+  .leyenda { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .leyenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  #velo { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 25; display: none; }
+  #velo.abierto { display: block; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Sinergia <span>Contenido</span></h1>
+  <nav>
+    <button class="tab activo" data-v="panel" onclick="ir('panel')">🏠 Panel</button>
+    <button class="tab" data-v="calendario" onclick="ir('calendario')">📅 Calendario</button>
+    <button class="tab" data-v="ideas" onclick="ir('ideas')">💡 Ideas</button>
+    <button class="tab" data-v="metricas" onclick="ir('metricas')">📈 Métricas</button>
+    <button class="tab" data-v="guiones" onclick="ir('guiones')">🎬 Guiones IA</button>
+    <button class="tab" data-v="carruseles" onclick="ir('carruseles')">🖼 Carruseles IA</button>
+  </nav>
+  <button class="btn" onclick="cargarDemo()">Cargar datos de ejemplo</button>
+</header>
+<main id="vista"></main>
+
+<div id="velo" onclick="cerrarLateral()"></div>
+<div id="lateral"></div>
+
+<script>
+const CLAVE = 'sinergia_contenido';
+const REDES = { instagram: { n: 'Instagram', c: 'var(--ig)', icono: '📸' }, tiktok: { n: 'TikTok', c: 'var(--tt)', icono: '🎵' }, youtube: { n: 'YouTube', c: 'var(--yt)', icono: '▶️' } };
+const HOY = new Date();
+let D = JSON.parse(localStorage.getItem(CLAVE) || 'null') || { posts: [], ideas: [], guiones: [], carruseles: [], metricas: [] };
+let vista = 'panel';
+let calAno = HOY.getFullYear(), calMes = HOY.getMonth();
+let estiloCarrusel = 'oscuro';
+
+function guardar() { localStorage.setItem(CLAVE, JSON.stringify(D)); }
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+const fmtN = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : String(Math.round(n));
+const iso = d => d.toISOString().slice(0, 10);
+
+function cargarDemo() {
+  const base = new Date(HOY); base.setDate(1);
+  const mk = (off, red, titulo, estado, vistas) => {
+    const f = new Date(base); f.setDate(off);
+    return { id: crypto.randomUUID(), fecha: iso(f), red, titulo, caption: 'Caption de ejemplo para ' + titulo, estado, vistas: vistas || 0 };
+  };
+  D = {
+    posts: [
+      mk(2, 'instagram', '5 errores al empezar tu negocio', 'publicado', 12400),
+      mk(2, 'tiktok', 'Detrás de cámaras del taller', 'publicado', 31000),
+      mk(5, 'youtube', 'Tutorial completo: primer cliente', 'publicado', 8300),
+      mk(8, 'instagram', 'Caso de éxito: María', 'publicado', 9800),
+      mk(HOY.getDate(), 'instagram', 'Tips de productividad', 'listo', 0),
+      mk(HOY.getDate(), 'tiktok', 'Tendencia del momento', 'borrador', 0),
+      mk(HOY.getDate() + 2, 'youtube', 'Q&A con la comunidad', 'borrador', 0),
+      mk(HOY.getDate() + 4, 'instagram', 'Carrusel: 7 herramientas IA', 'listo', 0),
+      mk(HOY.getDate() + 7, 'tiktok', 'Reto de 30 días', 'borrador', 0),
+    ],
+    ideas: [
+      { id: crypto.randomUUID(), texto: 'Serie "un consejo al día" durante una semana', fecha: iso(HOY) },
+      { id: crypto.randomUUID(), texto: 'Colaboración con cuenta aliada del sector', fecha: iso(HOY) },
+      { id: crypto.randomUUID(), texto: 'Video reaccionando a mitos comunes del rubro', fecha: iso(HOY) },
+    ],
+    guiones: [], carruseles: [],
+    metricas: Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(HOY); d.setMonth(d.getMonth() - 5 + i);
+      return { mes: d.toISOString().slice(0, 7),
+        instagram: { seguidores: 8200 + i * 420, interaccion: 4.1 + i * 0.15, vistas: 98000 + i * 9000 },
+        tiktok: { seguidores: 12100 + i * 900, interaccion: 6.8 + i * 0.2, vistas: 240000 + i * 21000 },
+        youtube: { seguidores: 3100 + i * 160, interaccion: 2.9 + i * 0.1, vistas: 41000 + i * 3500 } };
+    }),
+  };
+  guardar(); render();
+}
+
+function ir(v) {
+  vista = v;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('activo', t.dataset.v === v));
+  render();
+}
+function render() {
+  document.getElementById('vista').innerHTML = ({ panel, calendario, ideas, metricas, guiones, carruseles })[vista]();
+}
+
+/* ============ line/bar helpers (mismos patrones que el Panel) ============ */
+const tipEl = () => document.getElementById('tip');
+function lineChart(labels, series, { h = 170, fmt = fmtN } = {}) {
+  const W = 600, PL = 8, PR = 8, PT = 12, PB = 22;
+  const all = series.flatMap(s => s.vals);
+  const max = Math.max(...all) * 1.08 || 1, min = Math.min(...all) * 0.95;
+  const x = i => PL + i * (W - PL - PR) / Math.max(1, labels.length - 1);
+  const y = v => PT + (h - PT - PB) * (1 - (v - min) / (max - min || 1));
+  let g = '';
+  for (let k = 0; k <= 3; k++) { const gy = PT + k * (h - PT - PB) / 3; g += `<line x1="${PL}" y1="${gy}" x2="${W - PR}" y2="${gy}" stroke="var(--border)" stroke-width="1"/>`; }
+  const paths = series.map(s =>
+    `<path d="${s.vals.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ')}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round"/>` +
+    s.vals.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="${s.color}" stroke="var(--panel)" stroke-width="2"><title>${labels[i]} · ${s.nombre}: ${fmt(v)}</title></circle>`).join('')
+  ).join('');
+  const labs = labels.map((l, i) => `<text x="${x(i)}" y="${h - 6}" font-size="10" fill="var(--muted)" text-anchor="middle">${l}</text>`).join('');
+  const leyenda = series.length > 1 ? `<div class="leyenda">${series.map(s => `<span><i style="background:${s.color}"></i>${s.nombre}</span>`).join('')}</div>` : '';
+  return leyenda + `<svg viewBox="0 0 ${W} ${h}" width="100%">${g}${paths}${labs}</svg>`;
+}
+function barChart(labels, series, { h = 170, fmt = fmtN } = {}) {
+  const W = 600, PL = 8, PR = 8, PT = 12, PB = 22;
+  const max = Math.max(...series.flatMap(s => s.vals)) * 1.1 || 1;
+  const grupoW = (W - PL - PR) / labels.length;
+  const barW = Math.min(30, (grupoW - 10) / series.length - 2);
+  let g = '';
+  for (let k = 0; k <= 3; k++) { const gy = PT + k * (h - PT - PB) / 3; g += `<line x1="${PL}" y1="${gy}" x2="${W - PR}" y2="${gy}" stroke="var(--border)" stroke-width="1"/>`; }
+  let barras = '', labs = '';
+  labels.forEach((l, i) => {
+    const cx = PL + i * grupoW + grupoW / 2;
+    series.forEach((s, j) => {
+      const v = s.vals[i], bh = (h - PT - PB) * v / max;
+      const bx = cx - (series.length * (barW + 2)) / 2 + j * (barW + 2);
+      barras += `<rect x="${bx}" y="${h - PB - bh}" width="${barW}" height="${Math.max(1, bh)}" rx="4" fill="${s.color}"><title>${l} · ${s.nombre}: ${fmt(v)}</title></rect>`;
+    });
+    labs += `<text x="${cx}" y="${h - 6}" font-size="10" fill="var(--muted)" text-anchor="middle">${l}</text>`;
+  });
+  const leyenda = series.length > 1 ? `<div class="leyenda">${series.map(s => `<span><i style="background:${s.color}"></i>${s.nombre}</span>`).join('')}</div>` : '';
+  return leyenda + `<svg viewBox="0 0 ${W} ${h}" width="100%">${g}${barras}${labs}</svg>`;
+}
+
+/* ============ Panel principal ============ */
+function postCard(p) {
+  return `<div class="postcard" onclick="abrirPost('${p.id}')">
+    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+      <span class="red-dot" style="background:${REDES[p.red].c}"></span>${REDES[p.red].icono} ${esc(p.titulo)}</span>
+    <span style="display:flex; gap:8px; align-items:center; flex-shrink:0;">
+      <span style="color:var(--muted); font-size:12px;">${p.fecha.slice(5)}</span>
+      <span class="estado ${p.estado}">${p.estado}</span></span></div>`;
+}
+function panel() {
+  const hoy = iso(HOY);
+  const en7 = new Date(HOY); en7.setDate(en7.getDate() + 7);
+  const semana = D.posts.filter(p => p.fecha >= hoy && p.fecha <= iso(en7)).sort((a, b) => a.fecha.localeCompare(b.fecha));
+  const publicados = D.posts.filter(p => p.estado === 'publicado');
+  const mejores = [...publicados].sort((a, b) => (b.vistas || 0) - (a.vistas || 0)).slice(0, 3);
+  const m = D.metricas;
+  const segTot = m.length ? Object.keys(REDES).reduce((a, r) => a + m[m.length - 1][r].seguidores, 0) : 0;
+  const segPrev = m.length > 1 ? Object.keys(REDES).reduce((a, r) => a + m[m.length - 2][r].seguidores, 0) : 0;
+  return `
+  <div class="grid kpis">
+    <div class="kpi"><div class="lbl">Posts esta semana</div><div class="val">${semana.length}</div>
+      <div class="dif">${semana.filter(p => p.estado !== 'borrador').length} listos · ${semana.filter(p => p.estado === 'borrador').length} en borrador</div></div>
+    <div class="kpi"><div class="lbl">Seguidores totales</div><div class="val">${fmtN(segTot)}</div>
+      <div class="dif ${segTot >= segPrev ? 'up' : 'down'}">${segPrev ? (segTot >= segPrev ? '↑ +' : '↓ ') + fmtN(Math.abs(segTot - segPrev)) + ' vs. mes anterior' : '—'}</div></div>
+    <div class="kpi"><div class="lbl">Publicados (total)</div><div class="val">${publicados.length}</div><div class="dif">${D.posts.length} posts en total</div></div>
+    <div class="kpi"><div class="lbl">Ideas guardadas</div><div class="val">${D.ideas.length}</div><div class="dif">esperando turno</div></div>
+  </div>
+  <div class="grid cols2">
+    <div class="caja"><h3>Próximos 7 días</h3>${semana.length ? semana.map(postCard).join('') : '<div class="vacio">Nada programado. Ve al Calendario para crear posts.</div>'}</div>
+    <div class="caja"><h3>Crecimiento de seguidores</h3>
+      ${m.length ? lineChart(m.map(x => x.mes.slice(5)), [{ nombre: 'Totales', color: 'var(--accent2)', vals: m.map(x => Object.keys(REDES).reduce((a, r) => a + x[r].seguidores, 0)) }]) : '<div class="vacio">Sin métricas aún.</div>'}
+      <h3 style="margin-top:14px;">Mejores posts</h3>
+      ${mejores.length ? mejores.map(p => `<div class="postcard" style="cursor:default;"><span>${REDES[p.red].icono} ${esc(p.titulo)}</span><b style="color:var(--accent2);">${fmtN(p.vistas || 0)} vistas</b></div>`).join('') : '<div class="vacio">Aún no hay publicados.</div>'}</div>
+  </div>`;
+}
+
+/* ============ Calendario ============ */
+function calendario() {
+  const primero = new Date(calAno, calMes, 1);
+  const nombreMes = primero.toLocaleDateString('es', { month: 'long', year: 'numeric' });
+  const dowPrimero = (primero.getDay() + 6) % 7; // lunes = 0
+  const diasMes = new Date(calAno, calMes + 1, 0).getDate();
+  const celdas = [];
+  for (let i = 0; i < dowPrimero; i++) celdas.push(null);
+  for (let d = 1; d <= diasMes; d++) celdas.push(d);
+  const hoyIso = iso(HOY);
+  return `
+  <div class="caja">
+    <div class="cal-head">
+      <button class="btn sec" onclick="moverMes(-1)">←</button>
+      <h2>${nombreMes}</h2>
+      <button class="btn sec" onclick="moverMes(1)">→</button>
+    </div>
+    <div class="cal-grid">
+      ${['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(d => `<div class="cal-dow">${d}</div>`).join('')}
+      ${celdas.map(d => {
+        if (!d) return '<div class="dia otro-mes"></div>';
+        const f = `${calAno}-${String(calMes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const posts = D.posts.filter(p => p.fecha === f);
+        const completo = posts.length && posts.every(p => p.estado !== 'borrador');
+        return `<div class="dia ${posts.length ? 'con-posts' : ''} ${completo ? 'completo' : ''} ${f === hoyIso ? 'hoy' : ''}" onclick="abrirDia('${f}')">
+          <div class="num">${d}</div>
+          ${posts.slice(0, 3).map(p => `<div class="mini-post" style="border-left:3px solid ${REDES[p.red].c};">${REDES[p.red].icono} ${esc(p.titulo)}</div>`).join('')}
+          ${posts.length > 3 ? `<div style="color:var(--muted);">+${posts.length - 3} más</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="leyenda" style="margin-top:10px;">
+      <span><i style="background:var(--ig)"></i>Instagram</span><span><i style="background:var(--tt)"></i>TikTok</span><span><i style="background:var(--yt)"></i>YouTube</span>
+      <span style="margin-left:auto;">borde naranja = día completo · oscuro = sin contenido</span></div>
+  </div>`;
+}
+function moverMes(d) { calMes += d; if (calMes < 0) { calMes = 11; calAno--; } if (calMes > 11) { calMes = 0; calAno++; } render(); }
+
+/* ---- panel lateral crear/editar ---- */
+function abrirDia(fecha) {
+  const posts = D.posts.filter(p => p.fecha === fecha);
+  document.getElementById('lateral').innerHTML = `
+    <h2>📅 ${fecha}</h2>
+    ${posts.length ? posts.map(postCard).join('') : '<div class="vacio">Sin posts este día.</div>'}
+    <hr style="border-color:var(--border); margin:14px 0;">
+    <h2>Nuevo post</h2>
+    ${formPost({ fecha })}
+  `;
+  abrirLateral();
+}
+function abrirPost(id) {
+  const p = D.posts.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('lateral').innerHTML = `<h2>✏️ Editar post</h2>${formPost(p)}
+    <button class="btn sec" style="margin-top:8px; border-color:var(--bad); color:var(--bad);" onclick="borrarPost('${p.id}')">🗑 Eliminar</button>`;
+  abrirLateral();
+}
+function formPost(p) {
+  return `
+    <div class="campo"><label>Título</label><input id="fp_titulo" value="${esc(p.titulo || '')}"></div>
+    <div class="campo"><label>Red social</label><select id="fp_red">
+      ${Object.entries(REDES).map(([k, r]) => `<option value="${k}" ${p.red === k ? 'selected' : ''}>${r.icono} ${r.n}</option>`).join('')}</select></div>
+    <div class="campo"><label>Fecha</label><input id="fp_fecha" type="date" value="${p.fecha || iso(HOY)}"></div>
+    <div class="campo"><label>Estado</label><select id="fp_estado">
+      ${['borrador','listo','publicado'].map(e => `<option ${p.estado === e ? 'selected' : ''}>${e}</option>`).join('')}</select></div>
+    <div class="campo"><label>Caption / notas</label><textarea id="fp_caption" rows="3">${esc(p.caption || '')}</textarea></div>
+    <div class="campo"><label>Vistas (si ya se publicó)</label><input id="fp_vistas" type="number" value="${p.vistas || 0}"></div>
+    <button class="btn" onclick="guardarPost('${p.id || ''}')">Guardar</button>`;
+}
+function guardarPost(id) {
+  const datos = {
+    titulo: document.getElementById('fp_titulo').value.trim() || 'Sin título',
+    red: document.getElementById('fp_red').value,
+    fecha: document.getElementById('fp_fecha').value || iso(HOY),
+    estado: document.getElementById('fp_estado').value,
+    caption: document.getElementById('fp_caption').value,
+    vistas: +document.getElementById('fp_vistas').value || 0,
+  };
+  if (id) Object.assign(D.posts.find(x => x.id === id), datos);
+  else D.posts.push({ id: crypto.randomUUID(), ...datos });
+  guardar(); cerrarLateral(); render();
+}
+function borrarPost(id) {
+  if (!confirm('¿Eliminar este post?')) return;
+  D.posts = D.posts.filter(x => x.id !== id);
+  guardar(); cerrarLateral(); render();
+}
+function abrirLateral() { document.getElementById('lateral').classList.add('abierto'); document.getElementById('velo').classList.add('abierto'); }
+function cerrarLateral() { document.getElementById('lateral').classList.remove('abierto'); document.getElementById('velo').classList.remove('abierto'); }
+
+/* ============ Ideas ============ */
+function ideas() {
+  return `
+  <div class="caja"><h3>💡 Guardar una idea rápida</h3>
+    <div style="display:flex; gap:8px;">
+      <input id="idea_txt" placeholder="Escribe la idea..." style="flex:1;" onkeydown="if(event.key==='Enter')agregarIdea()">
+      <button class="btn" onclick="agregarIdea()">Guardar</button></div></div>
+  <div class="caja"><h3>Ideas guardadas (${D.ideas.length})</h3>
+    ${D.ideas.length ? D.ideas.map(i => `<div class="idea"><span>${esc(i.texto)}</span>
+      <span style="display:flex; gap:6px; flex-shrink:0;">
+        <button class="btn mini sec" onclick="ideaAGuion('${i.id}')">🎬 Guion</button>
+        <button class="btn mini sec" onclick="borrarIdea('${i.id}')">🗑</button></span></div>`).join('') : '<div class="vacio">Sin ideas todavía.</div>'}</div>`;
+}
+function agregarIdea() {
+  const t = document.getElementById('idea_txt').value.trim();
+  if (!t) return;
+  D.ideas.unshift({ id: crypto.randomUUID(), texto: t, fecha: iso(HOY) });
+  guardar(); render();
+}
+function borrarIdea(id) { D.ideas = D.ideas.filter(x => x.id !== id); guardar(); render(); }
+function ideaAGuion(id) {
+  const i = D.ideas.find(x => x.id === id);
+  if (!i) return;
+  ir('guiones');
+  document.getElementById('g_tema').value = i.texto;
+}
+
+/* ============ Métricas ============ */
+function metricas() {
+  const m = D.metricas;
+  if (!m.length) return '<div class="caja"><div class="vacio">Sin métricas. Usa "Cargar datos de ejemplo" o captura abajo.</div></div>' + formMetricas();
+  const u = m[m.length - 1], p = m.length > 1 ? m[m.length - 2] : null;
+  const tot = x => Object.keys(REDES).reduce((a, r) => a + x[r].seguidores, 0);
+  const inter = x => Object.keys(REDES).reduce((a, r) => a + x[r].interaccion, 0) / 3;
+  const vistas = x => Object.keys(REDES).reduce((a, r) => a + x[r].vistas, 0);
+  const publicados = D.posts.filter(x => x.estado === 'publicado');
+  const mejor = publicados.length ? [...publicados].sort((a, b) => (b.vistas || 0) - (a.vistas || 0))[0] : null;
+  const dif = (c, pr) => pr == null ? '' : `<div class="dif ${c >= pr ? 'up' : 'down'}">${c >= pr ? '↑' : '↓'} ${fmtN(Math.abs(c - pr))} vs. mes anterior</div>`;
+  return `
+  <div class="grid kpis">
+    <div class="kpi"><div class="lbl">Seguidores totales</div><div class="val">${fmtN(tot(u))}</div>${dif(tot(u), p && tot(p))}</div>
+    <div class="kpi"><div class="lbl">Interacción promedio</div><div class="val">${inter(u).toFixed(1)}%</div>${dif(inter(u), p && inter(p))}</div>
+    <div class="kpi"><div class="lbl">Visualizaciones del mes</div><div class="val">${fmtN(vistas(u))}</div>${dif(vistas(u), p && vistas(p))}</div>
+    <div class="kpi"><div class="lbl">Mejor post</div><div class="val" style="font-size:15px; line-height:1.4;">${mejor ? esc(mejor.titulo) : '—'}</div>
+      <div class="dif">${mejor ? fmtN(mejor.vistas) + ' vistas · ' + REDES[mejor.red].n : ''}</div></div>
+  </div>
+  <div class="grid cols2">
+    <div class="caja"><h3>Crecimiento de seguidores por red</h3>
+      ${lineChart(m.map(x => x.mes.slice(5)), Object.entries(REDES).map(([k, r]) => ({ nombre: r.n, color: r.c, vals: m.map(x => x[k].seguidores) })))}</div>
+    <div class="caja"><h3>Visualizaciones por red (este mes)</h3>
+      ${barChart(Object.values(REDES).map(r => r.n), [{ nombre: 'Vistas', color: 'var(--accent2)', vals: Object.keys(REDES).map(k => u[k].vistas) }])}</div>
+  </div>
+  ${formMetricas()}`;
+}
+function formMetricas() {
+  const mesAct = HOY.toISOString().slice(0, 7);
+  return `<div class="caja"><h3>Capturar métricas del mes (${mesAct})</h3>
+    <div style="display:grid; grid-template-columns: 90px repeat(3, 1fr); gap:8px; font-size:12px; align-items:center;">
+      <span></span><span style="color:var(--muted);">Seguidores</span><span style="color:var(--muted);">Interacción %</span><span style="color:var(--muted);">Vistas</span>
+      ${Object.entries(REDES).map(([k, r]) => `
+        <span>${r.icono} ${r.n}</span>
+        <input id="m_${k}_seg" type="number" placeholder="0"><input id="m_${k}_int" type="number" step="0.1" placeholder="0"><input id="m_${k}_vis" type="number" placeholder="0">`).join('')}
+    </div>
+    <button class="btn" style="margin-top:10px;" onclick="guardarMetricas('${mesAct}')">Guardar mes</button></div>`;
+}
+function guardarMetricas(mes) {
+  const entrada = { mes };
+  for (const k of Object.keys(REDES)) {
+    entrada[k] = { seguidores: +document.getElementById(`m_${k}_seg`).value || 0,
+      interaccion: +document.getElementById(`m_${k}_int`).value || 0,
+      vistas: +document.getElementById(`m_${k}_vis`).value || 0 };
+  }
+  D.metricas = D.metricas.filter(x => x.mes !== mes).concat(entrada).sort((a, b) => a.mes.localeCompare(b.mes));
+  guardar(); render();
+}
+
+/* ============ Guiones IA ============ */
+function guiones() {
+  return `
+  <div class="caja"><h3>🎬 Creador de guiones con IA</h3>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <input id="g_tema" placeholder="Tema del video (ej. cómo conseguir tu primer cliente)" style="flex:1; min-width:230px;">
+      <button class="btn" id="g_btn" onclick="generarGuion()">✨ Generar guion</button></div>
+    <div id="g_out"></div></div>
+  <div class="caja"><h3>Biblioteca de guiones (${D.guiones.length})</h3>
+    ${D.guiones.length ? D.guiones.map(g => `<div class="lib-item" onclick="verGuion('${g.id}')">
+      <span>🎬 ${esc(g.titulo)}</span>
+      <span style="display:flex; gap:6px;"><span style="color:var(--muted); font-size:12px;">${g.formato}</span>
+      <button class="btn mini sec" onclick="event.stopPropagation(); borrarGuion('${g.id}')">🗑</button></span></div>`).join('') : '<div class="vacio">Los guiones que generes se guardan aquí.</div>'}</div>`;
+}
+function guionHTML(g) {
+  return `
+    <div class="bloque" style="margin-top:12px;">
+      <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+        <b>${esc(g.titulo)}</b><span style="color:var(--muted); font-size:12px;">${esc(g.formato)} · ${esc(g.duracion)}</span></div>
+      <div class="tag">Gancho</div><p>${esc(g.gancho)}</p>
+      <div class="tag" style="margin-top:8px; display:block;">Desarrollo</div>
+      <ol style="padding-left:20px;">${(g.puntos || []).map(p => `<li>${esc(p)}</li>`).join('')}</ol>
+      <div class="tag" style="margin-top:8px; display:block;">Cierre + CTA</div><p>${esc(g.cierre)}</p>
+      <button class="btn sec mini" style="margin-top:10px;" onclick='navigator.clipboard.writeText(${JSON.stringify('')}); copiarGuion(this)'>📋 Copiar guion</button>
+    </div>`;
+}
+function copiarGuion(btn) {
+  const g = window._ultimoGuion;
+  if (!g) return;
+  navigator.clipboard.writeText(`${g.titulo}\n\nGANCHO:\n${g.gancho}\n\nDESARROLLO:\n${(g.puntos || []).map((p, i) => (i + 1) + '. ' + p).join('\n')}\n\nCIERRE:\n${g.cierre}\n\n(${g.formato} · ${g.duracion})`);
+  btn.textContent = '✔ Copiado';
+}
+async function generarGuion() {
+  const tema = document.getElementById('g_tema').value.trim();
+  const out = document.getElementById('g_out');
+  if (!tema) { out.innerHTML = '<div class="error-msg">Escribe primero el tema.</div>'; return; }
+  out.innerHTML = '<div class="cargando">✨ Escribiendo el guion…</div>';
+  document.getElementById('g_btn').disabled = true;
+  try {
+    const res = await fetch('/api/contenido', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'guion', tema }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error del servidor');
+    window._ultimoGuion = data;
+    D.guiones.unshift({ id: crypto.randomUUID(), tema, fecha: iso(HOY), ...data });
+    guardar();
+    out.innerHTML = guionHTML(data) + '<div class="cargando">Guardado en tu biblioteca ✔</div>';
+  } catch (e) {
+    out.innerHTML = `<div class="error-msg">⚠ ${esc(e.message)}</div>`;
+  } finally {
+    document.getElementById('g_btn').disabled = false;
+  }
+}
+function verGuion(id) {
+  const g = D.guiones.find(x => x.id === id);
+  if (!g) return;
+  window._ultimoGuion = g;
+  document.getElementById('g_out').innerHTML = guionHTML(g);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function borrarGuion(id) { D.guiones = D.guiones.filter(x => x.id !== id); guardar(); render(); }
+
+/* ============ Carruseles IA ============ */
+function carruseles() {
+  return `
+  <div class="caja"><h3>🖼 Creador de carruseles con IA</h3>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <input id="c_tema" placeholder="Tema del carrusel (ej. 7 herramientas de IA para tu negocio)" style="flex:1; min-width:230px;">
+      <select id="c_n">${[5,6,7,8,9,10].map(n => `<option ${n === 7 ? 'selected' : ''}>${n}</option>`).join('')}</select>
+      <select id="c_estilo" onchange="estiloCarrusel=this.value; pintarSlides();">
+        <option value="oscuro">Estilo oscuro</option><option value="naranja">Estilo naranja</option><option value="claro">Estilo claro</option></select>
+      <button class="btn" id="c_btn" onclick="generarCarrusel()">✨ Generar carrusel</button></div>
+    <div id="c_out"></div></div>
+  <div class="caja"><h3>Biblioteca de carruseles (${D.carruseles.length})</h3>
+    ${D.carruseles.length ? D.carruseles.map(c => `<div class="lib-item" onclick="verCarrusel('${c.id}')">
+      <span>🖼 ${esc(c.titulo)}</span>
+      <span style="display:flex; gap:6px;"><span style="color:var(--muted); font-size:12px;">${c.slides.length} filminas</span>
+      <button class="btn mini sec" onclick="event.stopPropagation(); borrarCarrusel('${c.id}')">🗑</button></span></div>`).join('') : '<div class="vacio">Los carruseles que generes se guardan aquí.</div>'}</div>`;
+}
+let carruselActual = null;
+function pintarSlides() {
+  const out = document.getElementById('c_out');
+  if (!carruselActual || !out) return;
+  const c = carruselActual;
+  out.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin:12px 0 8px; flex-wrap:wrap;">
+      <b>${esc(c.titulo)}</b>
+      <span style="display:flex; gap:6px;">
+        <button class="btn sec mini" onclick="descargarCarrusel()">⬇ Descargar texto</button>
+        <button class="btn sec mini" onclick="guardarEdicion()">💾 Guardar cambios</button></span></div>
+    <div class="slides">
+      ${c.slides.map((s, i) => `<div class="slide est-${estiloCarrusel}">
+        <span class="n">${i + 1} / ${c.slides.length} ${i === 0 ? '· GANCHO' : i === c.slides.length - 1 ? '· CIERRE' : ''}</span>
+        <input class="st" data-i="${i}" data-k="titulo" value="${esc(s.titulo)}">
+        <textarea data-i="${i}" data-k="texto" rows="5">${esc(s.texto)}</textarea></div>`).join('')}
+    </div>
+    <div class="cargando">Vista previa editable — cambia el texto de cualquier filmina y guarda.</div>`;
+}
+function leerEdicion() {
+  document.querySelectorAll('#c_out [data-i]').forEach(el => {
+    carruselActual.slides[+el.dataset.i][el.dataset.k] = el.value;
+  });
+}
+function guardarEdicion() {
+  if (!carruselActual) return;
+  leerEdicion();
+  const idx = D.carruseles.findIndex(x => x.id === carruselActual.id);
+  if (idx >= 0) D.carruseles[idx] = carruselActual;
+  guardar(); render();
+}
+async function generarCarrusel() {
+  const tema = document.getElementById('c_tema').value.trim();
+  const out = document.getElementById('c_out');
+  if (!tema) { out.innerHTML = '<div class="error-msg">Escribe primero el tema.</div>'; return; }
+  out.innerHTML = '<div class="cargando">✨ Diseñando las filminas…</div>';
+  document.getElementById('c_btn').disabled = true;
+  try {
+    const res = await fetch('/api/contenido', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'carrusel', tema, filminas: +document.getElementById('c_n').value }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error del servidor');
+    carruselActual = { id: crypto.randomUUID(), tema, fecha: iso(HOY), ...data };
+    D.carruseles.unshift(carruselActual);
+    guardar();
+    pintarSlides();
+  } catch (e) {
+    out.innerHTML = `<div class="error-msg">⚠ ${esc(e.message)}</div>`;
+  } finally {
+    document.getElementById('c_btn').disabled = false;
+  }
+}
+function verCarrusel(id) {
+  carruselActual = D.carruseles.find(x => x.id === id);
+  pintarSlides();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function borrarCarrusel(id) { D.carruseles = D.carruseles.filter(x => x.id !== id); guardar(); render(); }
+function descargarCarrusel() {
+  if (!carruselActual) return;
+  leerEdicion();
+  const c = carruselActual;
+  const txt = c.titulo + '\n\n' + c.slides.map((s, i) => `— Filmina ${i + 1} —\n${s.titulo}\n${s.texto}`).join('\n\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain' }));
+  a.download = 'carrusel.txt'; a.click();
+}
+
+render();
+</script>
+</body>
+</html>
